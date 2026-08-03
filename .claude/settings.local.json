@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la ~/.claude/plans/ 2>/dev/null | head -50)",
+      "PowerShell(Get-ChildItem \"$env:USERPROFILE\\\\.nuget\\\\packages\\\\modelcontextprotocol\" -ErrorAction SilentlyContinue | Select-Object Name)",
+      "Bash(mkdir -p \"C:\\\\Users\\\\links\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-links-source-repos-OpenID-MCPInterop\\\\5836ff11-4145-49b5-97fb-bce35e63f29a\\\\scratchpad\\\\reflect\")",
+      "Bash(dotnet new *)",
+      "Bash(dotnet run *)",
+      "Bash(curl -s -m 3 http://localhost:8080/realms/mcpinterop/.well-known/openid-configuration -o /dev/null -w \"keycloak: %{http_code}\\\\n\")",
+      "Bash(podman ps *)",
+      "Bash(dotnet build *)",
+      "Bash(dotnet test *)",
+      "WebFetch(domain:www.keycloak.org)",
+      "WebFetch(domain:www.google.com)",
+      "WebSearch",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(curl -sL \"https://raw.githubusercontent.com/keycloak/keycloak/main/docs/guides/securing-apps/jwt-authorization-grant.adoc\")",
+      "Bash(echo \"started with PID $!\")",
+      "Bash(powershell -Command 'Get-Process -Name dotnet -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowTitle -eq '\\\\'''\\\\'' } | Select-Object Id,ProcessName')",
+      "Bash(netstat -ano)",
+      "Bash(powershell -Command \"Stop-Process -Id 30348 -Force -ErrorAction SilentlyContinue\")",
+      "Bash(curl -s http://localhost:5100/.well-known/openid-configuration)",
+      "Bash(powershell -Command \"Stop-Process -Id 29472 -Force -ErrorAction SilentlyContinue\")",
+      "Bash(Issuer__KeycloakAuthority=\"\" dotnet run --project src/OpenID.MCPInterop.Issuer --no-build)",
+      "Bash(podman volume *)",
+      "Bash(podman rm *)",
+      "Bash(bash deploy/keycloak/setup.sh)",
+      "Bash(python3 -c \"import json; json.load\\(open\\('deploy/keycloak/import/mcpinterop-realm.json'\\)\\)\")",
+      "Bash(curl -s -o /dev/null -w \"Server /.well-known/oauth-protected-resource: %{http_code}\\\\n\" http://localhost:5000/.well-known/oauth-protected-resource)",
+      "Bash(cat /tmp/client.log)",
+      "Bash(powershell -Command \"Get-Process dotnet -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue\")",
+      "Bash(curl -s -o /dev/null -w \"Server: %{http_code}\\\\n\" http://localhost:5000/.well-known/oauth-protected-resource)",
+      "Bash(curl -s -o /dev/null -w \"Issuer: %{http_code}\\\\n\" http://localhost:5100/.well-known/jwks.json)"
+    ]
+  }
+}

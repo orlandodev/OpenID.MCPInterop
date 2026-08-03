@@ -1,0 +1,155 @@
+{
+  "realm": "mcpinterop",
+  "enabled": true,
+
+  "users": [
+    {
+      "id": "8f14e45f-ceea-467e-adc1-000000000001",
+      "username": "testuser",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Test",
+      "lastName": "User",
+      "email": "testuser@example.com",
+      "requiredActions": [ ],
+      "credentials": [
+        { "type": "password", "value": "password", "temporary": false }
+      ],
+      "federatedIdentities": [
+        {
+          "identityProvider": "mcpinterop-issuer",
+          "userId": "8f14e45f-ceea-467e-adc1-000000000001",
+          "userName": "testuser"
+        }
+      ]
+    }
+  ],
+
+  "clientScopes": [
+    {
+      "name": "mcp:tools",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true"
+      },
+      "protocolMappers": [
+        {
+          "name": "resource-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "http://localhost:5000",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+
+  "defaultOptionalClientScopes": [ "mcp:tools" ],
+
+  "clients": [
+    {
+      "clientId": "mcpinterop-ema-login",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "implicitFlowEnabled": false,
+      "redirectUris": [ "https://127.0.0.1:5050/ema-callback" ],
+      "webOrigins": [ ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    },
+    {
+      "clientId": "mcpinterop-ema-resource",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "local-dev-ema-resource-secret-change-me",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "implicitFlowEnabled": false,
+      "consentRequired": false,
+      "attributes": {
+        "oauth2.jwt.authorization.grant.enabled": "true",
+        "oauth2.jwt.authorization.grant.idp": "mcpinterop-issuer"
+      }
+    }
+  ],
+
+  "identityProviders": [
+    {
+      "alias": "mcpinterop-issuer",
+      "providerId": "oidc",
+      "enabled": true,
+      "displayName": "OpenID.MCPInterop.Issuer (ID-JAG)",
+      "trustEmail": false,
+      "storeToken": false,
+      "addReadTokenRoleOnCreate": false,
+      "authenticateByDefault": false,
+      "linkOnly": true,
+      "config": {
+        "issuer": "http://client.dev.internal:5100",
+        "authorizationUrl": "http://client.dev.internal:5100/authorize",
+        "tokenUrl": "http://client.dev.internal:5100/token",
+        "jwksUrl": "http://client.dev.internal:5100/.well-known/jwks.json",
+        "useJwksUrl": "true",
+        "jwtAuthorizationGrantEnabled": "true",
+        "jwtAuthorizationGrantAssertionReuseAllowed": "false",
+        "jwtAuthorizationGrantMaxAllowedAssertionExpiration": "300",
+        "clientId": "mcpinterop-ema-resource",
+        "clientSecret": "local-dev-ema-resource-secret-change-me",
+        "syncMode": "IMPORT"
+      }
+    }
+  ],
+
+  "clientProfiles": {
+    "profiles": [
+      {
+        "name": "cimd-profile",
+        "description": "",
+        "executors": [
+          {
+            "executor": "client-id-metadata-document",
+            "configuration": {
+              "cimd-allow-http-scheme": false,
+              "cimd-allow-permitted-domains": [ "client.dev.internal", "127.0.0.1" ],
+              "cimd-restrict-same-domain": false,
+              "cimd-required-properties": [],
+              "only-allow-confidential-client": false
+            }
+          }
+        ]
+      }
+    ]
+  },
+
+  "clientPolicies": {
+    "policies": [
+      {
+        "name": "cimd-policy",
+        "description": "",
+        "enabled": true,
+        "mode": "DEFAULT",
+        "conditions": [
+          {
+            "condition": "client-id-uri",
+            "configuration": {
+              "is-negative-logic": false,
+              "client-id-uri-scheme": [ "https" ],
+              "client-id-uri-allow-permitted-domains": [ "client.dev.internal" ]
+            }
+          }
+        ],
+        "profiles": [ "cimd-profile" ]
+      }
+    ]
+  }
+}

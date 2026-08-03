@@ -1,0 +1,14 @@
+
+services:
+  aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:latest
+    container_name: mcpinterop-aspire-dashboard
+    environment:
+      # Local dev only: skips the browser login-token flow entirely. Don't
+      # do this for a dashboard reachable by anyone other than you.
+      DASHBOARD__FRONTEND__AUTHMODE: Unsecured
+    ports:
+      - "18888:18888" # Dashboard UI - http://localhost:18888
+      - "4317:18889"  # OTLP/gRPC - what Server/Client/Issuer send telemetry to
+      - "4318:18890"  # OTLP/HTTP (only needed if a service is configured for
+                      # OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf instead of grpc)

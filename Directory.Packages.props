@@ -1,0 +1,50 @@
+<Project>
+  <PropertyGroup>
+	<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+	<CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+	<!-- MCP (Model Context Protocol) Packages
+		 v2.0.0 - Major update with enhanced stability and features -->
+	<PackageVersion Include="ModelContextProtocol" Version="2.0.0" />
+	<PackageVersion Include="ModelContextProtocol.AspNetCore" Version="2.0.0" />
+
+	<!-- Microsoft Extensions
+		 v10.0.10 - Latest stable patch release compatible with .NET 10 -->
+	<PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.10" />
+	<PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.10" />
+	<PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.10" />
+	<PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.10" />
+	<PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.10" />
+
+	<!-- Identity & JWT
+		 v8.19.2 - bumped from 8.2.1: Microsoft.AspNetCore.Authentication.JwtBearer 10.0.10
+		 transitively requires this floor via Microsoft.IdentityModel.Protocols.OpenIdConnect. -->
+	<PackageVersion Include="Microsoft.IdentityModel.Tokens" Version="8.19.2" />
+	<PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.19.2" />
+	<PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.19.2" />
+
+	<!-- Test Packages
+		 v17.12.0 - Latest stable SDK test harness
+		 v2.9.3 - Latest xunit stable
+		 v2.8.2 - Latest test runner
+		 Microsoft.AspNetCore.TestHost pinned to the same 10.0.10 line as the
+		 other Microsoft.Extensions/ASP.NET Core packages above - drives
+		 Issuer's minimal API endpoints in-process (UseTestServer) without a
+		 real Kestrel listener or a live IdP. -->
+	<PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+	<PackageVersion Include="xunit" Version="2.9.3" />
+	<PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
+	<PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.10" />
+
+	<!-- OpenTelemetry - traces/metrics/logs exported via OTLP to a standalone
+		 Aspire Dashboard container (see deploy/aspire-dashboard). v1.17.0 -
+		  latest stable; 1.13.1 had known moderate-severity advisories. -->
+	<PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.17.0" />
+	<PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.17.0" />
+	<PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.17.0" />
+	<PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.17.0" />
+  </ItemGroup>
+
+</Project>

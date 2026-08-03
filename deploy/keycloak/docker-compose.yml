@@ -1,0 +1,44 @@
+
+services:
+  keycloak:
+    # Confirm this is still current - Keycloak ships fast and CIMD /
+    # identity-assertion-jwt are both preview features that have moved
+    # between recent releases. 26.7.0+ is known to have both.
+    image: quay.io/keycloak/keycloak:26.7.0
+    container_name: mcpinterop-keycloak
+    command:
+      - start-dev
+      - --features=cimd,identity-assertion-jwt
+      - --truststore-paths=/opt/keycloak/certs
+      - --import-realm
+    # No extra_hosts here on purpose - that's machine-specific (your LAN IP)
+    # and lives in a generated, gitignored docker-compose.override.yml
+    # instead. Run deploy/keycloak/setup.sh to generate it, or see
+    # docker-compose.override.yml.example to do it by hand. Compose
+    # auto-merges *.override.yml with this file, no extra -f flag needed.
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"
+    volumes:
+      # Client's CIMD document is served over HTTPS using the ASP.NET Core
+      # dev cert (the MCP SDK rejects a non-HTTPS ClientMetadataDocumentUri).
+      # Keycloak fetches that document itself, so it needs to trust the same
+      # cert - see docs/keycloak-setup.md for how to export it into ./certs.
+      - ./certs:/opt/keycloak/certs:ro
+      # Without this, start-dev's realm/client/policy data lives only in the
+      # container's own filesystem - any restart or recreate silently wipes
+      # the whole mcpinterop realm, including everything --import-realm just
+      # imported (though re-importing on next start is harmless - Keycloak
+      # skips realms that already exist).
+      - keycloak-data:/opt/keycloak/data
+      # Auto-imports the realm/CIMD-client-policy/mcp:tools-scope/test-user
+      # bundle on startup - see deploy/keycloak/import/mcpinterop-realm.json.
+      # This is what --import-realm above reads from.
+      - ./import:/opt/keycloak/data/import:ro
+    # Local dev only: start-dev + admin/admin + plain HTTP. Do not reuse this
+    # compose file as-is for anything reachable outside your own machine.
+
+volumes:
+  keycloak-data:

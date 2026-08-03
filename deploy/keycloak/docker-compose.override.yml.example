@@ -1,0 +1,17 @@
+# Copy this to docker-compose.override.yml (gitignored - it's machine-specific)
+# and replace the IP with your machine's current LAN IP (`ipconfig` on
+# Windows, `ip addr`/`ifconfig` on Linux/Mac). deploy/keycloak/setup.sh
+# generates this file for you automatically on Windows - this example is
+# only here for reference, or if you want to do it by hand.
+#
+# Why this exists: Keycloak (in the container) has to fetch Client's hosted
+# CIMD document itself, server-to-server. host.docker.internal is unreliable
+# for that on Podman with podman machine on Windows (see the "Podman on
+# Windows..." section in docs/keycloak-setup.md), so this maps a
+# cert-compatible hostname straight at your host's real LAN IP instead,
+# bypassing that limitation entirely.
+
+services:
+  keycloak:
+    extra_hosts:
+      - "client.dev.internal:192.168.1.179"
