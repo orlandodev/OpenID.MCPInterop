@@ -19,6 +19,13 @@ namespace OpenID.MCPInterop.Client;
 /// matching route in <see cref="Endpoints"/> completes when the loopback
 /// callback lands.
 /// </summary>
+/// <remarks>
+/// <see cref="OpenID.MCPInterop.Client.Partner.LoginFlow"/> mirrors this
+/// class's state-parsing/TaskCompletionSource shape for its own leg (only
+/// the browser hand-off differs - Process.Start here vs. an HTTP redirect
+/// there). Not factored into Common, since Server/Issuer have no business
+/// depending on OAuth client-callback plumbing - keep both in sync by hand.
+/// </remarks>
 internal static class LoginFlows
 {
     public static async Task<AuthorizationResult?> HandleAuthorizationCallbackAsync(

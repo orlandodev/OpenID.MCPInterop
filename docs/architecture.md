@@ -118,6 +118,57 @@ sequenceDiagram
     Server->>Client: Step 7 - Tool result
 ```
 
+### Leg 3 - Direct-trust (external partner, no CIMD, no ID-JAG)
+
+```mermaid
+sequenceDiagram
+    participant ClientPartner as Client.Partner
+    participant PartnerServer as Partner's MCP server
+    participant AS as Hosted AS (e.g. Auth0/Keycloak)
+
+    ClientPartner->>PartnerServer: Step 1 - Call tool (unauthenticated)
+    PartnerServer->>ClientPartner: Step 2 - 401 + WWW-Authenticate (resource_metadata URL + scope)
+    ClientPartner->>PartnerServer: Step 3 - GET protected-resource metadata (RFC 9728)
+    PartnerServer->>ClientPartner: Step 4 - PRM: resource + authorization_servers[]<br/>SDK checks resource matches the URL just called (VerifyResourceMatch)
+    ClientPartner->>AS: Step 5 - OIDC discovery, then authorization request (redirect + PKCE)<br/>pre-registered client_id, no CIMD document<br/>(PartnerAuthServerSelector picks this AS out of authorization_servers[])
+    AS->>ClientPartner: Step 6 - Redirect with authorization code (+ iss param, RFC 9207)<br/>SDK checks iss matches the AS it just discovered (mix-up mitigation)
+    ClientPartner->>AS: Step 7 - POST /token (code + PKCE verifier) -> access_token (JWT)
+    ClientPartner->>PartnerServer: Step 8 - Call tool again (Authorization: Bearer access_token)
+    PartnerServer-->>AS: Step 9 - Validate access token (JWKS + aud claim)<br/>issuer allowlisted out-of-band, not via CIMD or ID-JAG
+    PartnerServer->>ClientPartner: Step 10 - Tool result
+```
+
+Steps 1-4 (and the checks noted on steps 4/6) are all handled inside the MCP C# SDK's `ClientOAuthProvider` - not code this repo wrote. Two things worth being precise about, since they're easy to conflate: the SDK validates the *authorization response's* `iss` parameter (step 6, RFC 9207) against the AS metadata it discovered in step 5 - a mix-up-attack check that happens before the token exchange. It does **not** separately decode the resulting access token (step 7) and re-check its own `iss` claim against `authorization_servers[]` - by OAuth design, the access token is opaque to the client. Verifying that the token's issuer/audience/signature are actually trusted is the resource server's job (step 9 here, or `Server`'s own `JwtBearer` validation against `Authorization:Authority` when testing locally) - the client's role is limited to steps 1-4/6 confirming it's talking to the AS and resource it expects *before* it hands over any credentials, not re-litigating the token's contents afterward. `Client.Partner`'s `TokenInspector`/`LoggingTokenCache` exist specifically to let a human eyeball those claims manually, since the SDK doesn't surface or police them itself.
+
+Not every external MCP server needs the CIMD or EMA machinery above - some
+just publish RFC 9728 Protected Resource Metadata, challenge unauthenticated
+calls with `WWW-Authenticate`, and validate any OAuth 2.1 JWT access token
+whose *issuer* they've allowlisted out-of-band (onboarding is "send me your
+AS issuer URL"). That's this leg: a normal, pre-registered OAuth 2.1 client
+at whatever AS you already trust (no CIMD document to host, no ID-JAG
+token-exchange/redemption step), calling an external resource server
+directly - the same shape "Picking and choosing services" above already
+describes for `Server`, just from the other side of the relationship.
+
+`OpenID.MCPInterop.Client.Partner` implements this leg as a small,
+standalone web UI (separate from `Client`, which stays focused on the CIMD/EMA
+legs against this repo's own Keycloak). It reuses the MCP C# SDK's
+`ClientOAuthOptions` the same way `Client`'s CIMD leg does, but sets
+`ClientId`/`ClientSecret` directly instead of `ClientMetadataDocumentUri` -
+per the SDK's own docs, `ClientId` is "if not provided, the client will
+attempt to register dynamically", i.e. it's a first-class alternative to
+CIMD, not a CIMD-only surface. Because this leg is a real (if small) web app
+rather than a console harness, its OAuth redirect handling differs from
+`Client`'s `LoginFlows.cs`: instead of `Process.Start`-ing a new browser tab
+and blocking a console session on it, `Client.Partner`'s `/connect` route
+redirects the *same* browser that clicked "Connect" to the authorization URL
+(see `Client.Partner/LoginFlow.cs`) - a pattern that keeps working whether
+this project runs on your own machine or is deployed somewhere with its own
+public URL. Only the AS needs to be publicly reachable for the partner's
+server to validate tokens against it server-to-server; the redirect itself
+only ever needs to reach whichever browser is doing the human login, so
+`Client.Partner` runs locally by default, same as `Client` does today.
+
 ### Observability - dev-only side channel
 
 ```mermaid

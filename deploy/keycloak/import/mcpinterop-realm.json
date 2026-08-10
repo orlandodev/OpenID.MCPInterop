@@ -80,6 +80,23 @@
         "oauth2.jwt.authorization.grant.enabled": "true",
         "oauth2.jwt.authorization.grant.idp": "mcpinterop-issuer"
       }
+    },
+    {
+      "clientId": "mcpinterop-partner-direct",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "local-dev-partner-direct-secret-change-me",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "implicitFlowEnabled": false,
+      "redirectUris": [ "https://127.0.0.1:5070/callback" ],
+      "webOrigins": [ ],
+      "consentRequired": false,
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
     }
   ],
 
