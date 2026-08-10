@@ -11,8 +11,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Package versions managed by Directory.Packages.props -->
-    <!-- Microsoft.Extensions.Hosting comes transitively via Microsoft.NET.Sdk.Web -->
     <PackageReference Include="ModelContextProtocol" />
   </ItemGroup>
 
@@ -21,10 +19,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Lets OpenID.MCPInterop.Tests exercise this project's internal
-         helpers (ConnectFailureReporter, PartnerAuthServerSelector,
-         TokenInspector) directly, the same way Server/Client keep their own
-         internals narrow rather than making them public just for tests. -->
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
       <_Parameter1>OpenID.MCPInterop.Tests</_Parameter1>
     </AssemblyAttribute>

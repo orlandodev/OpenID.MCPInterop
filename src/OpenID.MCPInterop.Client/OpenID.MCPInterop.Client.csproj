@@ -10,8 +10,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Package versions managed by Directory.Packages.props -->
-    <!-- Microsoft.Extensions.Hosting comes transitively via Microsoft.NET.Sdk.Web -->
     <PackageReference Include="ModelContextProtocol" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
   </ItemGroup>
