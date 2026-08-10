@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/OpenID.MCPInterop.Client/OpenID.MCPInterop.Client.csproj" />
+    <Project Path="src/OpenID.MCPInterop.Client.Partner/OpenID.MCPInterop.Client.Partner.csproj" />
     <Project Path="src/OpenID.MCPInterop.Common/OpenID.MCPInterop.Common.csproj" />
     <Project Path="src/OpenID.MCPInterop.Issuer/OpenID.MCPInterop.Issuer.csproj" />
     <Project Path="src/OpenID.MCPInterop.Server/OpenID.MCPInterop.Server.csproj" />

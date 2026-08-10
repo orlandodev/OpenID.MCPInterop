@@ -9,7 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Package versions managed by Directory.Packages.props -->
     <PackageReference Include="ModelContextProtocol.AspNetCore" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
   </ItemGroup>

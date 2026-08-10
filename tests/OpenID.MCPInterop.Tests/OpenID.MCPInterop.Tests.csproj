@@ -9,7 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Package versions managed by Directory.Packages.props -->
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio">
@@ -24,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\OpenID.MCPInterop.Common\OpenID.MCPInterop.Common.csproj" />
     <ProjectReference Include="..\..\src\OpenID.MCPInterop.Client\OpenID.MCPInterop.Client.csproj" />
+    <ProjectReference Include="..\..\src\OpenID.MCPInterop.Client.Partner\OpenID.MCPInterop.Client.Partner.csproj" />
     <ProjectReference Include="..\..\src\OpenID.MCPInterop.Issuer\OpenID.MCPInterop.Issuer.csproj" />
   </ItemGroup>
 
