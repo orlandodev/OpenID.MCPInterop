@@ -50,11 +50,11 @@ Then:
 
 ```bash
 dotnet run --project src/OpenID.MCPInterop.Server
-dotnet run --project src/OpenID.MCPInterop.Client
+dotnet run --project src/OpenID.MCPInterop.Client --launch-profile Keycloak
 ```
 
-Log in as `testuser` / `password` (created by the import) when the browser
-opens.
+A browser tab opens to `Client`'s own home page - click Connect, then log in
+as `testuser` / `password` (created by the import).
 
 **Previously known quirk (now actually fixed)**: `Client` used to open a
 *second* browser tab almost immediately after the first, each with its own
@@ -304,15 +304,15 @@ curl http://localhost:5100/.well-known/jwks.json
 
 should return one RSA key (changes every time `Issuer` restarts - see the
 stale-cache gotcha above if you restart it after Keycloak has already
-fetched the old one). Then run `Server`, then `Client`, same as the CIMD
-"Quick start" above - expect **two** browser logins (the CIMD login, then
-the EMA leg's dedicated login), and two distinct `Ping result` lines in
-`Client`'s console, one labeled per leg:
-
-```
-Ping result (Agent Governance / CIMD leg): pong from OpenID.MCPInterop.Server
-Ping result (EMA / cross-org leg): pong from OpenID.MCPInterop.Server
-```
+fetched the old one). Then run `Server`, then `Client --launch-profile
+Keycloak`, same as the CIMD "Quick start" above - in `Client`'s web UI,
+click Connect for the primary (CIMD) leg first, then, once it shows
+`Connected` and lists the `ping` tool, click "Start EMA leg" - expect **two**
+browser logins (the CIMD login, then the EMA leg's dedicated login), and two
+`ping` tool entries in the page's Tools sections (one under the primary
+leg, one under "EMA leg") once both are `Connected`. Invoking `ping` on
+either should log a `pong from OpenID.MCPInterop.Server` result in the
+page's Log panel.
 
 If the JWT-bearer redemption fails at Keycloak on a fresh setup (not a
 restart), check first whether a *new* client/identity-provider inside an

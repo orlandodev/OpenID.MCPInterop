@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace OpenID.MCPInterop.Client;
+namespace OpenID.MCPInterop.Client.Options;
 
 public sealed class EmaOptions
 {

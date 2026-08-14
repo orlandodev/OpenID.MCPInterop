@@ -1,4 +1,4 @@
-namespace OpenID.MCPInterop.Client.Partner;
+namespace OpenID.MCPInterop.Client;
 
 /// <summary>
 /// Decides what /connect's catch block should log for a failure while awaiting

@@ -1,4 +1,4 @@
-using OpenID.MCPInterop.Client.Partner;
+using OpenID.MCPInterop.Client;
 using Xunit;
 
 namespace OpenID.MCPInterop.Tests;

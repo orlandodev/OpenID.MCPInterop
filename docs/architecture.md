@@ -57,11 +57,16 @@ how much is config-only depends on which piece:
 - **`Server`** is a plain `JwtBearer` resource server (`Authorization:Authority`/
   `Audience`/`RequireHttpsMetadata` in its `appsettings.json`) - nothing
   Keycloak-specific in code. Point it at any standard OIDC-compliant AS.
-- **`Client`'s CIMD leg** (arrow 2) is config-driven too (`Client:CimdDocumentUrl`/
-  `RedirectUri`/`Scopes`, `Server:Endpoint`), but only works against an AS
-  that implements CIMD (draft-ietf-oauth-client-id-metadata-document) -
-  a protocol capability, not just a URL.
-- **`Client`'s EMA leg** has two independent settings under `Ema:` -
+- **`Client`'s primary leg** (arrow 2) is config-driven via `Client:UseCimd` -
+  `true` hosts a CIMD document (`Client:CimdDocumentUrl`/`RedirectUri`/
+  `Scopes`, `Server:Endpoint`) and only works against an AS that implements
+  CIMD (draft-ietf-oauth-client-id-metadata-document) - a protocol
+  capability, not just a URL; `false` uses a pre-registered
+  `Client:ClientId`/`ClientSecret`/`Authority` instead (Leg 3, direct-trust -
+  no CIMD document, no protocol capability required of the AS). See "Named
+  scenarios" below for how the three appsettings files set this per partner.
+- **`Client`'s EMA leg** is a further opt-in on top of either (`Client:UseEma`),
+  with two independent settings under `Ema:` -
   `IdentityProviderAuthority` (arrow 1's login IdP) and `ResourceAuthority`
   (arrow 4's redemption AS). Point them at two different systems if your
   OpenID Provider and OAuth AS genuinely aren't the same product; the
@@ -122,23 +127,23 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant ClientPartner as Client.Partner
+    participant Client
     participant PartnerServer as Partner's MCP server
     participant AS as Hosted AS (e.g. Auth0/Keycloak)
 
-    ClientPartner->>PartnerServer: Step 1 - Call tool (unauthenticated)
-    PartnerServer->>ClientPartner: Step 2 - 401 + WWW-Authenticate (resource_metadata URL + scope)
-    ClientPartner->>PartnerServer: Step 3 - GET protected-resource metadata (RFC 9728)
-    PartnerServer->>ClientPartner: Step 4 - PRM: resource + authorization_servers[]<br/>SDK checks resource matches the URL just called (VerifyResourceMatch)
-    ClientPartner->>AS: Step 5 - OIDC discovery, then authorization request (redirect + PKCE)<br/>pre-registered client_id, no CIMD document<br/>(PartnerAuthServerSelector picks this AS out of authorization_servers[])
-    AS->>ClientPartner: Step 6 - Redirect with authorization code (+ iss param, RFC 9207)<br/>SDK checks iss matches the AS it just discovered (mix-up mitigation)
-    ClientPartner->>AS: Step 7 - POST /token (code + PKCE verifier) -> access_token (JWT)
-    ClientPartner->>PartnerServer: Step 8 - Call tool again (Authorization: Bearer access_token)
+    Client->>PartnerServer: Step 1 - Call tool (unauthenticated)
+    PartnerServer->>Client: Step 2 - 401 + WWW-Authenticate (resource_metadata URL + scope)
+    Client->>PartnerServer: Step 3 - GET protected-resource metadata (RFC 9728)
+    PartnerServer->>Client: Step 4 - PRM: resource + authorization_servers[]<br/>SDK checks resource matches the URL just called (VerifyResourceMatch)
+    Client->>AS: Step 5 - OIDC discovery, then authorization request (redirect + PKCE)<br/>pre-registered client_id, no CIMD document<br/>(AuthServerSelector picks this AS out of authorization_servers[])
+    AS->>Client: Step 6 - Redirect with authorization code (+ iss param, RFC 9207)<br/>SDK checks iss matches the AS it just discovered (mix-up mitigation)
+    Client->>AS: Step 7 - POST /token (code + PKCE verifier) -> access_token (JWT)
+    Client->>PartnerServer: Step 8 - Call tool again (Authorization: Bearer access_token)
     PartnerServer-->>AS: Step 9 - Validate access token (JWKS + aud claim)<br/>issuer allowlisted out-of-band, not via CIMD or ID-JAG
-    PartnerServer->>ClientPartner: Step 10 - Tool result
+    PartnerServer->>Client: Step 10 - Tool result
 ```
 
-Steps 1-4 (and the checks noted on steps 4/6) are all handled inside the MCP C# SDK's `ClientOAuthProvider` - not code this repo wrote. Two things worth being precise about, since they're easy to conflate: the SDK validates the *authorization response's* `iss` parameter (step 6, RFC 9207) against the AS metadata it discovered in step 5 - a mix-up-attack check that happens before the token exchange. It does **not** separately decode the resulting access token (step 7) and re-check its own `iss` claim against `authorization_servers[]` - by OAuth design, the access token is opaque to the client. Verifying that the token's issuer/audience/signature are actually trusted is the resource server's job (step 9 here, or `Server`'s own `JwtBearer` validation against `Authorization:Authority` when testing locally) - the client's role is limited to steps 1-4/6 confirming it's talking to the AS and resource it expects *before* it hands over any credentials, not re-litigating the token's contents afterward. `Client.Partner`'s `TokenInspector`/`LoggingTokenCache` exist specifically to let a human eyeball those claims manually, since the SDK doesn't surface or police them itself.
+Steps 1-4 (and the checks noted on steps 4/6) are all handled inside the MCP C# SDK's `ClientOAuthProvider` - not code this repo wrote. Two things worth being precise about, since they're easy to conflate: the SDK validates the *authorization response's* `iss` parameter (step 6, RFC 9207) against the AS metadata it discovered in step 5 - a mix-up-attack check that happens before the token exchange. It does **not** separately decode the resulting access token (step 7) and re-check its own `iss` claim against `authorization_servers[]` - by OAuth design, the access token is opaque to the client. Verifying that the token's issuer/audience/signature are actually trusted is the resource server's job (step 9 here, or `Server`'s own `JwtBearer` validation against `Authorization:Authority` when testing locally) - the client's role is limited to steps 1-4/6 confirming it's talking to the AS and resource it expects *before* it hands over any credentials, not re-litigating the token's contents afterward. `Client`'s `TokenInspector`/`LoggingTokenCache` exist specifically to let a human eyeball those claims manually, since the SDK doesn't surface or police them itself.
 
 Not every external MCP server needs the CIMD or EMA machinery above - some
 just publish RFC 9728 Protected Resource Metadata, challenge unauthenticated
@@ -150,24 +155,23 @@ token-exchange/redemption step), calling an external resource server
 directly - the same shape "Picking and choosing services" above already
 describes for `Server`, just from the other side of the relationship.
 
-`OpenID.MCPInterop.Client.Partner` implements this leg as a small,
-standalone web UI (separate from `Client`, which stays focused on the CIMD/EMA
-legs against this repo's own Keycloak). It reuses the MCP C# SDK's
-`ClientOAuthOptions` the same way `Client`'s CIMD leg does, but sets
-`ClientId`/`ClientSecret` directly instead of `ClientMetadataDocumentUri` -
-per the SDK's own docs, `ClientId` is "if not provided, the client will
-attempt to register dynamically", i.e. it's a first-class alternative to
-CIMD, not a CIMD-only surface. Because this leg is a real (if small) web app
-rather than a console harness, its OAuth redirect handling differs from
-`Client`'s `LoginFlows.cs`: instead of `Process.Start`-ing a new browser tab
-and blocking a console session on it, `Client.Partner`'s `/connect` route
-redirects the *same* browser that clicked "Connect" to the authorization URL
-(see `Client.Partner/LoginFlow.cs`) - a pattern that keeps working whether
-this project runs on your own machine or is deployed somewhere with its own
-public URL. Only the AS needs to be publicly reachable for the partner's
-server to validate tokens against it server-to-server; the redirect itself
-only ever needs to reach whichever browser is doing the human login, so
-`Client.Partner` runs locally by default, same as `Client` does today.
+`Client` implements this leg itself, via its `Client:UseCimd` config toggle
+(see "Named scenarios" below) rather than a separate project. When
+`UseCimd` is `false`, `Client` reuses the MCP C# SDK's `ClientOAuthOptions`
+the same way it does for the CIMD leg, but sets `ClientId`/`ClientSecret`
+directly instead of `ClientMetadataDocumentUri` - per the SDK's own docs,
+`ClientId` is "if not provided, the client will attempt to register
+dynamically", i.e. it's a first-class alternative to CIMD, not a CIMD-only
+surface. Every leg - CIMD, direct-trust, and EMA - is driven from the same
+browser-based web UI (`GET /`, a Connect button, a human-readable session
+log): `Client`'s `/connect` route redirects the *same* browser that clicked
+"Connect" to the authorization URL (see `Client/LoginFlows.cs`) rather than
+`Process.Start`-ing a new tab - a pattern that keeps working whether this
+project runs on your own machine or is deployed somewhere with its own
+public URL. Only the AS needs to be publicly reachable to validate tokens
+against it server-to-server; the redirect itself only ever needs to reach
+whichever browser is doing the human login, so `Client` runs locally by
+default regardless of scenario.
 
 ### Observability - dev-only side channel
 
@@ -210,7 +214,44 @@ for how the pieces fit together, and
 [`docs/keycloak-setup.md`](keycloak-setup.md)'s EMA section for the Keycloak
 side.
 
+### Named scenarios
+
+`Client` is one project supporting three named interop scenarios, selected
+entirely by config - `ASPNETCORE_ENVIRONMENT` (or `dotnet run
+--launch-profile <name>`, see `Properties/launchSettings.json`) picks which
+`appsettings.{Scenario}.json` ASP.NET Core's standard environment-config
+layering applies on top of the shared `appsettings.json` defaults:
+
+| Scenario | `Client:UseCimd` | `Client:UseEma` | What it exercises |
+|---|---|---|---|
+| `Keycloak` | `true` | `true` | Agent Governance (CIMD) leg + cross-org (EMA) leg, both against this repo's own local Keycloak - the two build phases above. |
+| `Auth0` | `true` | `false` | Agent Governance (CIMD) leg against a real Auth0 tenant with CIMD support. |
+| `11AIBlockchain` | `false` | `false` | Leg 3, direct-trust - a pre-registered OAuth 2.1 client, no CIMD document, no ID-JAG. |
+
+Every scenario runs through the same web UI (`GET /`, a Connect button per
+leg, a human-readable session log) - see "Leg 3 - Direct-trust" above for
+why every leg redirects the browser rather than opening a new tab.
+
+`Server` gets the same `Keycloak`/`Auth0` scenario split for its own
+`Authorization:Authority`/`Audience`/`RequireHttpsMetadata`
+(`appsettings.Keycloak.json`/`appsettings.Auth0.json`, `Properties/
+launchSettings.json`), so the `Client`/`Auth0` scenario can be validated
+fully end to end against this repo's own `Server` - `Keycloak` is listed
+first in `Server`'s `launchSettings.json`, so a plain `dotnet run --project
+src/OpenID.MCPInterop.Server` with no `--launch-profile` still behaves
+exactly as before. `Server` has no `11AIBlockchain` profile - that scenario's
+`Client:Server:Endpoint` points at an external partner's server, not this
+repo's own `Server`.
+
 ### EMA leg wiring
+
+Only enabled when `Client:UseEma` is `true` (the `Keycloak` scenario - see
+"Named scenarios" above), and only startable once the primary leg is
+`Connected`: the web UI's "Start EMA leg" button posts to `/ema-connect`,
+which redirects the browser to Keycloak's authorization endpoint the same
+way `/connect` does for the primary leg - `LoginFlows.RunEmaLoginAsync`
+hands off via a `TaskCompletionSource<Uri>` rather than `Process.Start`ing a
+second browser tab, so both legs share one browser session end to end.
 
 Unlike the diagram's literal single "OpenID Provider" circle, this repo
 splits that role across two systems rather than giving `Issuer` its own
@@ -257,8 +298,8 @@ interactive login:
    `Client/CimdDocumentFactory.cs`) and drives a full CIMD authorization
    code + PKCE flow against `Server` via the MCP C# SDK's built-in
    `ClientOAuthOptions`. **This is the Agent Governance milestone** - run
-   `Server` then `Client` per `docs/keycloak-setup.md`'s "Quick start" to
-   confirm it.
+   `Server` then `Client` (`--launch-profile Keycloak`) per
+   `docs/keycloak-setup.md`'s "Quick start" to confirm it.
 4. Bring up `Issuer` - its `/token` endpoint mints ID-JAGs (RSA-signed,
    published at `/.well-known/jwks.json`).
 5. Keycloak's `identity-assertion-jwt` feature trusts `Issuer` as an ID-JAG
@@ -266,8 +307,10 @@ interactive login:
    [`docs/keycloak-setup.md`](keycloak-setup.md)'s EMA section; imported
    automatically by `deploy/keycloak/import/mcpinterop-realm.json`, same as
    the CIMD leg's config.
-6. `Client` runs the EMA leg after the CIMD leg's `Ping` succeeds - two
-   distinct browser logins in one run. **This is the cross-org milestone.**
+6. In `Client`'s web UI (`Keycloak` scenario), click Connect for the primary
+   (CIMD) leg first; once it shows `Connected` and lists the `ping` tool,
+   click "Start EMA leg" - two distinct browser logins in one run, both
+   redirect-driven from the same page. **This is the cross-org milestone.**
    Confirmed working end-to-end against a live Keycloak instance - see
    [`docs/keycloak-setup.md`](keycloak-setup.md)'s EMA section for the real
    gotchas hit getting there (container networking, RFC 8693's
@@ -329,3 +372,51 @@ ephemeral signing key) matter directly if you're consuming `Issuer` or
   truststore (`--truststore-paths`, for its own server-to-server fetch) are
   two separate steps, both handled by `deploy/keycloak/setup.sh` - see
   `docs/keycloak-setup.md`'s "Quick start".
+- **Auth0's CIMD leg (`Client:UseCimd` scenario `Auth0`): confirmed blocked
+  at token exchange, root cause not yet found.** CIMD document hosting,
+  registration, and discovery all work correctly - Auth0 fetches the
+  document, materializes a client (`tpc_...`), recognizes it at `/authorize`,
+  and completes login. The subsequent `POST /oauth/token` then fails with
+  HTTP 401 `{"error":"access_denied","error_description":"Unauthorized"}`,
+  logged tenant-side only as a bare "Failed Exchange" / `"Unauthorized"`
+  with no further detail exposed via the Dashboard or Management API logs.
+  Auth0 forces every CIMD client into "strict third-party client security
+  mode" with no permissive-mode alternative, which required real manual
+  setup beyond what CIMD's "no per-client registration" premise implies
+  (none of this needed for Keycloak's CIMD support):
+  - A client grant authorizing the client against the target API
+    (`POST /api/v2/client-grants`) - though this grant's `subject_type`
+    comes back `"client"` (machine-to-machine), and removing it entirely
+    made no observed difference to the token-exchange failure.
+  - Promoting the login connection (e.g. `Username-Password-Authentication`)
+    to **domain level** (Dashboard: Authentication > Database > connection >
+    "Promote Connection to Domain Level") - a normal per-application
+    connection toggle is grayed out for third-party clients, and the
+    Management API explicitly rejects enabling one directly
+    (`"Client ... isn't first party. Only first party clients can be
+    enabled for a connection"`).
+  - A test user with a verified email and the target API's scope
+    (`mcp:tools`) explicitly assigned as a permission, with RBAC and "Add
+    Permissions in the Access Token" enabled on the API itself.
+  Ruled out while diagnosing the token-exchange failure, all confirmed via
+  direct inspection (Management API `GET /clients/{id}`, `GET
+  /.well-known/oauth-protected-resource`) rather than guesswork:
+  `token_endpoint_auth_method` (correctly `none`, matching the hosted CIMD
+  document), `app_type` (defaulted to `native` since `CimdMetadataDocument`
+  has no `application_type` field - explicitly set to `web` via the
+  Management API, no change), the RFC 8707 `resource` identifier (byte-for-
+  byte match between `Server`'s protected-resource metadata and the Auth0
+  API's identifier), RBAC/API permission settings, cached-session/silent-SSO
+  consent skipping (reproduced identically in a fresh incognito session -
+  and no consent screen was ever shown at all, even before the token
+  exchange, which is itself unexplained for a third-party app), Actions/
+  Rules on the Login flow (none defined), and Attack Protection/IP
+  throttling (temporarily disabled, no change). Next step if picked back up:
+  Auth0 support, who have server-side log detail the Dashboard doesn't
+  expose - the generic, information-free `access_denied` here reads as
+  either an undocumented CIMD + strict-third-party + Resource Parameter
+  Compatibility Profile interaction, or a platform bug in a fairly new
+  Auth0 feature combination, not a configuration gap in this repo's
+  `Client`/`Server` code (both confirmed correctly configured against every
+  angle above). `appsettings.Auth0.json` (`Client` and `Server`) hold real,
+  working tenant/tunnel values for whenever this is resumed.

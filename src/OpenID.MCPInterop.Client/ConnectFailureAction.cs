@@ -1,4 +1,4 @@
-namespace OpenID.MCPInterop.Client.Partner;
+namespace OpenID.MCPInterop.Client;
 
 /// <summary>What /connect's own catch block should do for a failure observed while awaiting the authorization URL - see ConnectFailureReporter.</summary>
 internal enum ConnectFailureAction

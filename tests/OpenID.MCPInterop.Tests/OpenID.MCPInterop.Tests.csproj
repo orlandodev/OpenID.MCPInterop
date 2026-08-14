@@ -23,7 +23,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\OpenID.MCPInterop.Common\OpenID.MCPInterop.Common.csproj" />
     <ProjectReference Include="..\..\src\OpenID.MCPInterop.Client\OpenID.MCPInterop.Client.csproj" />
-    <ProjectReference Include="..\..\src\OpenID.MCPInterop.Client.Partner\OpenID.MCPInterop.Client.Partner.csproj" />
     <ProjectReference Include="..\..\src\OpenID.MCPInterop.Issuer\OpenID.MCPInterop.Issuer.csproj" />
   </ItemGroup>
 

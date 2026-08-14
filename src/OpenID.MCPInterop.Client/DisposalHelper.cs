@@ -1,8 +1,8 @@
-namespace OpenID.MCPInterop.Client.Partner;
+namespace OpenID.MCPInterop.Client;
 
 /// <summary>
 /// Disposes a previous value if present - extracted out of
-/// PartnerSessionState.SetConnectedAsync purely for testability, since
+/// ClientSessionState.SetConnectedAsync purely for testability, since
 /// McpClient itself has no usable public constructor to fake against.
 /// </summary>
 internal static class DisposalHelper
