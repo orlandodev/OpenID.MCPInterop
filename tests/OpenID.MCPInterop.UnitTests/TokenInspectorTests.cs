@@ -22,7 +22,7 @@ public sealed class TokenInspectorTests
 
         var claims = TokenInspector.LogClaims(session, token);
 
-        var logLine = Assert.Single(session.Log);
+        var logLine = Assert.Single(session.Log).Message;
         Assert.Contains("typ:at+jwt", logLine);
         Assert.Contains("iss:https://dev-example.us.auth0.com/", logLine);
         Assert.Contains("sub:google-oauth2|123", logLine);
@@ -50,7 +50,7 @@ public sealed class TokenInspectorTests
 
         TokenInspector.LogClaims(session, token);
 
-        var logLine = Assert.Single(session.Log);
+        var logLine = Assert.Single(session.Log).Message;
         Assert.Contains("client_id/azp:legacy-client-id", logLine);
     }
 
@@ -62,7 +62,7 @@ public sealed class TokenInspectorTests
 
         TokenInspector.LogClaims(session, token);
 
-        var logLine = Assert.Single(session.Log);
+        var logLine = Assert.Single(session.Log).Message;
         Assert.Contains("typ:(none)", logLine);
         Assert.Contains("iss:(missing)", logLine);
         Assert.Contains("sub:(missing)", logLine);
@@ -79,7 +79,7 @@ public sealed class TokenInspectorTests
         var claims = TokenInspector.LogClaims(session, "opaque-token-with-no-dots");
 
         Assert.Null(claims);
-        var logLine = Assert.Single(session.Log);
+        var logLine = Assert.Single(session.Log).Message;
         Assert.Contains("not a JWT", logLine);
     }
 
@@ -94,7 +94,7 @@ public sealed class TokenInspectorTests
 
         Assert.Null(exception);
         Assert.Null(claims);
-        var logLine = Assert.Single(session.Log);
+        var logLine = Assert.Single(session.Log).Message;
         Assert.Contains("Could not decode access token claims", logLine);
     }
 

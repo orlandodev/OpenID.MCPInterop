@@ -195,7 +195,7 @@ public static class Endpoints
             }
 
             var normalizedLeg = NormalizeLeg(leg, options);
-            if (leg is not ("primary" or "ema"))
+            if (leg is not ("primary" or "ema") || normalizedLeg != leg)
             {
                 session.AppendLog($"Unrecognized leg '{leg}' - cannot invoke a tool.");
                 return Results.Redirect("/");
@@ -214,7 +214,17 @@ public static class Endpoints
             var tools = normalizedLeg == "primary" ? session.Tools : session.EmaTools;
             var tool = tools.FirstOrDefault(t => t.Name == name);
             var form = await context.Request.ReadFormAsync();
-            var arguments = BuildArguments(form, ClientHtmlRenderer.ParseSchemaFields(tool.Schema));
+
+            Dictionary<string, object?> arguments;
+            try
+            {
+                arguments = BuildArguments(form, ClientHtmlRenderer.ParseSchemaFields(tool.Schema));
+            }
+            catch (FormatException ex)
+            {
+                session.AppendLog($"Tool '{name}' not invoked - {ex.Message}");
+                return RenderPageOrFragment(context, antiforgery, session, options, serverEndpointOptions, emaOptions);
+            }
 
             // Bounds the wait so a tool call that never responds (e.g. a stuck
             // external control-plane check) fails predictably instead of hanging.
@@ -381,7 +391,13 @@ public static class Endpoints
                 {
                     Name = "Target MCP server",
                     Endpoint = new Uri(serverEndpointOptions.Endpoint),
+                    // Server only speaks Streamable HTTP (WithHttpTransport(), no SSE) -
+                    // pin the mode instead of paying for AutoDetect's probe. Disable the
+                    // standalone GET stream too: it's for server-initiated pushes, and
+                    // DemoTools.Ping never pushes anything, so there's nothing for it to
+                    // carry.
                     TransportMode = HttpTransportMode.StreamableHttp,
+                    EnableStandaloneGetStream = false,
                     ConnectionTimeout = TimeSpan.FromMinutes(5),
                     OAuth = oauthOptions,
                 },
@@ -569,6 +585,7 @@ public static class Endpoints
     /// JSON directly into that field). Blank, non-required fields are
     /// omitted rather than sent as empty strings.
     /// </summary>
+    /// <exception cref="FormatException">An object/array field's text isn't valid JSON - reject the call locally rather than forwarding an unparsed string to the server.</exception>
     private static Dictionary<string, object?> BuildArguments(IFormCollection form, List<ClientHtmlRenderer.SchemaField> fields)
     {
         var arguments = new Dictionary<string, object?>();
@@ -584,7 +601,7 @@ public static class Endpoints
             {
                 "number" or "integer" when double.TryParse(raw, out var number) => number,
                 "boolean" when bool.TryParse(raw, out var boolean) => boolean,
-                "object" or "array" => TryParseJsonElement(raw) is { } parsed ? (object)parsed : raw,
+                "object" or "array" => ParseJsonElement(field.Name, raw),
                 _ => raw,
             };
         }
@@ -592,15 +609,15 @@ public static class Endpoints
         return arguments;
     }
 
-    private static JsonElement? TryParseJsonElement(string raw)
+    private static JsonElement ParseJsonElement(string fieldName, string raw)
     {
         try
         {
             return JsonSerializer.Deserialize<JsonElement>(raw);
         }
-        catch (JsonException)
+        catch (JsonException ex)
         {
-            return null;
+            throw new FormatException($"argument '{fieldName}' must be valid JSON: {ex.Message}", ex);
         }
     }
 }

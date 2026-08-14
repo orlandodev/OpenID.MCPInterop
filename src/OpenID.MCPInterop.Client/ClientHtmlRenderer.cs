@@ -469,9 +469,9 @@ internal static class ClientHtmlRenderer
               <div class="mcp-console-body">
             """);
 
-        foreach (var line in log)
+        foreach (var (timestamp, message) in log)
         {
-            html.Append($"""<div class="mcp-log-line"><span class="mcp-log-time"></span><span class="mcp-log-text">{WebUtility.HtmlEncode(line)}</span></div>""");
+            html.Append($"""<div class="mcp-log-line"><span class="mcp-log-time">{timestamp:T}</span><span class="mcp-log-text">{WebUtility.HtmlEncode(message)}</span></div>""");
         }
 
         html.Append("</div></section>");

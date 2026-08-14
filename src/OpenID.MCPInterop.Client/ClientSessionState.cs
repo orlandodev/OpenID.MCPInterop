@@ -13,7 +13,7 @@ namespace OpenID.MCPInterop.Client;
 /// </summary>
 public sealed class ClientSessionState
 {
-    private readonly List<string> _log = [];
+    private readonly List<(DateTimeOffset Timestamp, string Message)> _log = [];
     private readonly List<(string Name, string? Description, string? Schema)> _tools = [];
     private readonly List<(string Name, string? Description, string? Schema)> _emaTools = [];
     private readonly object _connectLock = new();
@@ -44,7 +44,7 @@ public sealed class ClientSessionState
 
     public ToolInvocationResult? LastEmaResult { get; private set; }
 
-    public IReadOnlyList<string> Log
+    public IReadOnlyList<(DateTimeOffset Timestamp, string Message)> Log
     {
         get
         {
@@ -85,7 +85,7 @@ public sealed class ClientSessionState
     {
         lock (_log)
         {
-            _log.Add($"{DateTimeOffset.Now:T} {message}");
+            _log.Add((DateTimeOffset.Now, message));
         }
     }
 
