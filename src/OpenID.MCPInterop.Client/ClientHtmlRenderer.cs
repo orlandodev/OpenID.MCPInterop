@@ -454,11 +454,13 @@ internal static class ClientHtmlRenderer
         var html = new StringBuilder();
         html.Append($"""
             <section class="mcp-console" id="mcp-console">
+              <div class="mcp-console-resize-handle" title="Drag to resize"></div>
               <div class="mcp-console-bar">
                 <span class="mcp-console-label">Log</span>
                 <span class="mcp-dot is-live"></span>
                 <span class="mcp-console-count">{log.Count} events</span>
                 <div class="mcp-console-actions">
+                  <button type="button" onclick="mcpCopyLog(this)">Copy</button>
                   <button type="button" onclick="mcpToggleConsole(this)">Collapse</button>
                   <form method="post" action="/log/clear" hx-post="/log/clear" hx-target="#mcp-app" hx-swap="outerHTML" style="display:contents">
                     {antiforgeryField}

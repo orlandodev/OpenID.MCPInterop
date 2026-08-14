@@ -359,6 +359,22 @@ body {
 .mcp-console.is-collapsed { height: var(--mcp-console-h-collapsed); }
 .mcp-console.is-collapsed .mcp-console-body { display: none; }
 
+.mcp-console-resize-handle {
+  flex: none;
+  height: 6px;
+  margin: -3px 0 -3px;
+  cursor: ns-resize;
+  background: transparent;
+  touch-action: none;
+}
+.mcp-console-resize-handle:hover,
+.mcp-console-resize-handle.is-dragging {
+  background: var(--color-accent-300);
+}
+.mcp-console.is-collapsed .mcp-console-resize-handle {
+  display: none;
+}
+
 .mcp-console-bar {
   display: flex; align-items: center; gap: 10px;
   padding: 9px 16px;
