@@ -1,4 +1,4 @@
-namespace OpenID.MCPInterop.Client;
+namespace OpenID.MCPInterop.Client.Models;
 
 /// <summary>
 /// The most recent tool call's outcome on a leg, for the UI's "Last

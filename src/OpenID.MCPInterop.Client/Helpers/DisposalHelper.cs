@@ -1,4 +1,4 @@
-namespace OpenID.MCPInterop.Client;
+namespace OpenID.MCPInterop.Client.Helpers;
 
 /// <summary>
 /// Disposes a previous value if present - extracted out of

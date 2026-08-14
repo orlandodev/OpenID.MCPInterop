@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
 using ModelContextProtocol.Authentication;
 using ModelContextProtocol.Client;
+using OpenID.MCPInterop.Client.Helpers;
+using OpenID.MCPInterop.Client.Models;
 
-namespace OpenID.MCPInterop.Client;
+namespace OpenID.MCPInterop.Client.State;
 
 /// <summary>
 /// Single in-memory session shared across requests, tracking both the

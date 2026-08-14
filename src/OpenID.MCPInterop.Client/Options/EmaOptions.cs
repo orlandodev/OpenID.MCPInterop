@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using OpenID.MCPInterop.Client.Auth;
 
 namespace OpenID.MCPInterop.Client.Options;
 

@@ -1,4 +1,4 @@
-namespace OpenID.MCPInterop.Client;
+namespace OpenID.MCPInterop.Client.Auth;
 
 /// <summary>
 /// Picks an authorization server out of a target server's advertised list, for

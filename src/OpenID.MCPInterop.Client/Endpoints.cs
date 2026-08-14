@@ -7,7 +7,11 @@ using ModelContextProtocol;
 using ModelContextProtocol.Authentication;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
+using OpenID.MCPInterop.Client.Auth;
+using OpenID.MCPInterop.Client.Models;
 using OpenID.MCPInterop.Client.Options;
+using OpenID.MCPInterop.Client.Rendering;
+using OpenID.MCPInterop.Client.State;
 using OpenID.MCPInterop.Common.Models;
 
 namespace OpenID.MCPInterop.Client;

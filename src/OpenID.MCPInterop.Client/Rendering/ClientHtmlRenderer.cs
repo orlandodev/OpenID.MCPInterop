@@ -2,9 +2,12 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Antiforgery;
+using OpenID.MCPInterop.Client;
+using OpenID.MCPInterop.Client.Models;
 using OpenID.MCPInterop.Client.Options;
+using OpenID.MCPInterop.Client.State;
 
-namespace OpenID.MCPInterop.Client;
+namespace OpenID.MCPInterop.Client.Rendering;
 
 /// <summary>
 /// Builds every HTML string this Client's web UI renders - the full document

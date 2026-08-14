@@ -1,6 +1,6 @@
 using OpenID.MCPInterop.Common.Models;
 
-namespace OpenID.MCPInterop.Client;
+namespace OpenID.MCPInterop.Client.Auth;
 
 /// <summary>
 /// Builds the <see cref="CimdMetadataDocument"/> this Client hosts at its

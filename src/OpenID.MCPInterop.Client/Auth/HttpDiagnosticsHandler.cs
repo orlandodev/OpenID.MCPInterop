@@ -1,6 +1,6 @@
 using System.Net;
 
-namespace OpenID.MCPInterop.Client;
+namespace OpenID.MCPInterop.Client.Auth;
 
 /// <summary>
 /// Logs every HTTP request/response this connection makes, calling out the

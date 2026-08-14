@@ -165,7 +165,7 @@ dynamically", i.e. it's a first-class alternative to CIMD, not a CIMD-only
 surface. Every leg - CIMD, direct-trust, and EMA - is driven from the same
 browser-based web UI (`GET /`, a Connect button, a human-readable session
 log): `Client`'s `/connect` route redirects the *same* browser that clicked
-"Connect" to the authorization URL (see `Client/LoginFlows.cs`) rather than
+"Connect" to the authorization URL (see `Client/Auth/LoginFlows.cs`) rather than
 `Process.Start`-ing a new tab - a pattern that keeps working whether this
 project runs on your own machine or is deployed somewhere with its own
 public URL. Only the AS needs to be publicly reachable to validate tokens
@@ -292,7 +292,7 @@ interactive login:
    configuration; see [`docs/keycloak-setup.md`](keycloak-setup.md) for
    details and the manual fallback. `Client` already hosts its
    `CimdMetadataDocument` (see `Common/Models` and
-   `Client/CimdDocumentFactory.cs`) and drives a full CIMD authorization
+   `Client/Auth/CimdDocumentFactory.cs`) and drives a full CIMD authorization
    code + PKCE flow against `Server` via the MCP C# SDK's built-in
    `ClientOAuthOptions`. **This is the Agent Governance milestone** - run
    `Server` then `Client` (`--launch-profile Keycloak`) per

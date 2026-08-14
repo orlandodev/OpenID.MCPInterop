@@ -1,5 +1,7 @@
 using System.Text;
-using OpenID.MCPInterop.Client;
+using OpenID.MCPInterop.Client.Auth;
+using OpenID.MCPInterop.Client.Models;
+using OpenID.MCPInterop.Client.State;
 using Xunit;
 
 namespace OpenID.MCPInterop.UnitTests;

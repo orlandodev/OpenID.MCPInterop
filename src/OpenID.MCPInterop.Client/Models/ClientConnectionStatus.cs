@@ -1,4 +1,4 @@
-namespace OpenID.MCPInterop.Client;
+namespace OpenID.MCPInterop.Client.Models;
 
 public enum ClientConnectionStatus
 {

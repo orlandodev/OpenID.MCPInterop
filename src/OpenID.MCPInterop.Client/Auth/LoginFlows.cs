@@ -6,8 +6,10 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using ModelContextProtocol.Authentication;
+using OpenID.MCPInterop.Client;
+using OpenID.MCPInterop.Client.State;
 
-namespace OpenID.MCPInterop.Client;
+namespace OpenID.MCPInterop.Client.Auth;
 
 /// <summary>
 /// Drives the browser-based logins this Client runs: the primary leg's

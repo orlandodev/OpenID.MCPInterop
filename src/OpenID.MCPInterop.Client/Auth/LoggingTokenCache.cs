@@ -1,6 +1,7 @@
 using ModelContextProtocol.Authentication;
+using OpenID.MCPInterop.Client.State;
 
-namespace OpenID.MCPInterop.Client;
+namespace OpenID.MCPInterop.Client.Auth;
 
 /// <summary>
 /// Minimal in-memory <see cref="ITokenCache"/> (the SDK's own InMemoryTokenCache

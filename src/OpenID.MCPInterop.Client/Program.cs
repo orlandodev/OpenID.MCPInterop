@@ -1,5 +1,7 @@
 using OpenID.MCPInterop.Client;
+using OpenID.MCPInterop.Client.Auth;
 using OpenID.MCPInterop.Client.Options;
+using OpenID.MCPInterop.Client.State;
 using OpenID.MCPInterop.Common.Configuration;
 using OpenID.MCPInterop.Common.Observability;
 
