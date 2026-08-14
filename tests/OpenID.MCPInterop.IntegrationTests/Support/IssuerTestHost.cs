@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using OpenID.MCPInterop.Issuer;
 
-namespace OpenID.MCPInterop.Tests.Support;
+namespace OpenID.MCPInterop.IntegrationTests.Support;
 
 /// <summary>
 /// Boots Issuer's real <see cref="Endpoints.MapIssuerEndpoints"/> against an

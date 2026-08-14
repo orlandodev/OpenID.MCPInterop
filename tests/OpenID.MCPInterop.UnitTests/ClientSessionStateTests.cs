@@ -1,7 +1,7 @@
 using OpenID.MCPInterop.Client;
 using Xunit;
 
-namespace OpenID.MCPInterop.Tests;
+namespace OpenID.MCPInterop.UnitTests;
 
 /// <summary>
 /// Covers the check-then-act race regression: /connect's Status-guard check

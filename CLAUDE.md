@@ -100,8 +100,13 @@ Four projects, one shared kernel:
   across restarts (see `docs/keycloak-setup.md` for the Keycloak-side
   cache-reload consequence of that).
 
-`OpenID.MCPInterop.Tests` currently covers only `Common` models via xUnit;
-project references point at `Common` for that reason. Test names like
+Two xUnit test projects, split by kind: `OpenID.MCPInterop.UnitTests`
+(references `Common`/`Client`, exercises isolated classes directly - no
+ASP.NET Core pipeline involved) and `OpenID.MCPInterop.IntegrationTests`
+(references `Common`/`Issuer`, boots `Issuer`'s real `/token` and
+`/.well-known/*` endpoints against an in-process `TestServer` - see
+`Support/IssuerTestHost.cs` - with a fake IdP `HttpMessageHandler` standing
+in for a live identity provider). Test names like
 `ClientId_ShouldMatch_HostedDocumentUrl` intentionally encode known
 interop footguns (e.g. `client_id` must byte-for-byte match the hosted CIMD
 document URL) - when adding tests for new gotchas, prefer this

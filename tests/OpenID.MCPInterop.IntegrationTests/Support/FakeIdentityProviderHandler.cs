@@ -6,7 +6,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using Microsoft.IdentityModel.Tokens;
 
-namespace OpenID.MCPInterop.Tests.Support;
+namespace OpenID.MCPInterop.IntegrationTests.Support;
 
 /// <summary>
 /// Stands in for the OpenID Provider Issuer's /token endpoint validates

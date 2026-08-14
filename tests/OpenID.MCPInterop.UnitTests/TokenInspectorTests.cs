@@ -2,7 +2,7 @@ using System.Text;
 using OpenID.MCPInterop.Client;
 using Xunit;
 
-namespace OpenID.MCPInterop.Tests;
+namespace OpenID.MCPInterop.UnitTests;
 
 /// <summary>
 /// TokenInspector had no prior coverage. Also exercises the client_id lookup

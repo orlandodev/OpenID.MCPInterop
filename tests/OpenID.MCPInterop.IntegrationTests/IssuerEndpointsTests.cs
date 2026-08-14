@@ -4,10 +4,10 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using OpenID.MCPInterop.Common.Constants;
 using OpenID.MCPInterop.Issuer;
-using OpenID.MCPInterop.Tests.Support;
+using OpenID.MCPInterop.IntegrationTests.Support;
 using Xunit;
 
-namespace OpenID.MCPInterop.Tests;
+namespace OpenID.MCPInterop.IntegrationTests;
 
 /// <summary>
 /// Exercises Issuer's real RFC 8693 /token endpoint (Endpoints.cs) end to

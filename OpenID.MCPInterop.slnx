@@ -6,6 +6,7 @@
     <Project Path="src/OpenID.MCPInterop.Server/OpenID.MCPInterop.Server.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/OpenID.MCPInterop.Tests/OpenID.MCPInterop.Tests.csproj" />
+    <Project Path="tests/OpenID.MCPInterop.UnitTests/OpenID.MCPInterop.UnitTests.csproj" />
+    <Project Path="tests/OpenID.MCPInterop.IntegrationTests/OpenID.MCPInterop.IntegrationTests.csproj" />
   </Folder>
 </Solution>

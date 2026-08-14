@@ -20,7 +20,8 @@ OpenID.MCPInterop.sln
 │   ├── OpenID.MCPInterop.Server/    MCP server - Agent Governance target
 │   └── OpenID.MCPInterop.Issuer/    Stand-in enterprise IdP - mints ID-JAGs for local testing
 ├── tests/
-│   └── OpenID.MCPInterop.Tests/
+│   ├── OpenID.MCPInterop.UnitTests/
+│   └── OpenID.MCPInterop.IntegrationTests/
 ├── deploy/
 │   ├── keycloak/           Local Keycloak (CIMD leg) - see docs/keycloak-setup.md
 │   └── aspire-dashboard/   Standalone OTEL viewer - see docs/observability.md
