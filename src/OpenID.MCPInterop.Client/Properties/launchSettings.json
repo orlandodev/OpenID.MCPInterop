@@ -8,14 +8,6 @@
       },
       "applicationUrl": "https://localhost:5050"
     },
-    "Auth0": {
-      "commandName": "Project",
-      "launchBrowser": true,
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Auth0"
-      },
-      "applicationUrl": "https://localhost:5050"
-    },
     "11AIBlockchain": {
       "commandName": "Project",
       "launchBrowser": true,

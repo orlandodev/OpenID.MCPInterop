@@ -216,7 +216,7 @@ side.
 
 ### Named scenarios
 
-`Client` is one project supporting three named interop scenarios, selected
+`Client` is one project supporting two named interop scenarios, selected
 entirely by config - `ASPNETCORE_ENVIRONMENT` (or `dotnet run
 --launch-profile <name>`, see `Properties/launchSettings.json`) picks which
 `appsettings.{Scenario}.json` ASP.NET Core's standard environment-config
@@ -225,23 +225,20 @@ layering applies on top of the shared `appsettings.json` defaults:
 | Scenario | `Client:UseCimd` | `Client:UseEma` | What it exercises |
 |---|---|---|---|
 | `Keycloak` | `true` | `true` | Agent Governance (CIMD) leg + cross-org (EMA) leg, both against this repo's own local Keycloak - the two build phases above. |
-| `Auth0` | `true` | `false` | Agent Governance (CIMD) leg against a real Auth0 tenant with CIMD support. |
 | `11AIBlockchain` | `false` | `false` | Leg 3, direct-trust - a pre-registered OAuth 2.1 client, no CIMD document, no ID-JAG. |
 
 Every scenario runs through the same web UI (`GET /`, a Connect button per
 leg, a human-readable session log) - see "Leg 3 - Direct-trust" above for
 why every leg redirects the browser rather than opening a new tab.
 
-`Server` gets the same `Keycloak`/`Auth0` scenario split for its own
+`Server` has only the `Keycloak` profile in its own
 `Authorization:Authority`/`Audience`/`RequireHttpsMetadata`
-(`appsettings.Keycloak.json`/`appsettings.Auth0.json`, `Properties/
-launchSettings.json`), so the `Client`/`Auth0` scenario can be validated
-fully end to end against this repo's own `Server` - `Keycloak` is listed
-first in `Server`'s `launchSettings.json`, so a plain `dotnet run --project
-src/OpenID.MCPInterop.Server` with no `--launch-profile` still behaves
-exactly as before. `Server` has no `11AIBlockchain` profile - that scenario's
-`Client:Server:Endpoint` points at an external partner's server, not this
-repo's own `Server`.
+(`appsettings.Keycloak.json`, `Properties/launchSettings.json`) - it's
+listed first in `Server`'s `launchSettings.json`, so a plain `dotnet run
+--project src/OpenID.MCPInterop.Server` with no `--launch-profile` still
+behaves exactly as before. `Server` has no `11AIBlockchain` profile - that
+scenario's `Client:Server:Endpoint` points at an external partner's server,
+not this repo's own `Server`.
 
 ### EMA leg wiring
 
@@ -372,51 +369,3 @@ ephemeral signing key) matter directly if you're consuming `Issuer` or
   truststore (`--truststore-paths`, for its own server-to-server fetch) are
   two separate steps, both handled by `deploy/keycloak/setup.sh` - see
   `docs/keycloak-setup.md`'s "Quick start".
-- **Auth0's CIMD leg (`Client:UseCimd` scenario `Auth0`): confirmed blocked
-  at token exchange, root cause not yet found.** CIMD document hosting,
-  registration, and discovery all work correctly - Auth0 fetches the
-  document, materializes a client (`tpc_...`), recognizes it at `/authorize`,
-  and completes login. The subsequent `POST /oauth/token` then fails with
-  HTTP 401 `{"error":"access_denied","error_description":"Unauthorized"}`,
-  logged tenant-side only as a bare "Failed Exchange" / `"Unauthorized"`
-  with no further detail exposed via the Dashboard or Management API logs.
-  Auth0 forces every CIMD client into "strict third-party client security
-  mode" with no permissive-mode alternative, which required real manual
-  setup beyond what CIMD's "no per-client registration" premise implies
-  (none of this needed for Keycloak's CIMD support):
-  - A client grant authorizing the client against the target API
-    (`POST /api/v2/client-grants`) - though this grant's `subject_type`
-    comes back `"client"` (machine-to-machine), and removing it entirely
-    made no observed difference to the token-exchange failure.
-  - Promoting the login connection (e.g. `Username-Password-Authentication`)
-    to **domain level** (Dashboard: Authentication > Database > connection >
-    "Promote Connection to Domain Level") - a normal per-application
-    connection toggle is grayed out for third-party clients, and the
-    Management API explicitly rejects enabling one directly
-    (`"Client ... isn't first party. Only first party clients can be
-    enabled for a connection"`).
-  - A test user with a verified email and the target API's scope
-    (`mcp:tools`) explicitly assigned as a permission, with RBAC and "Add
-    Permissions in the Access Token" enabled on the API itself.
-  Ruled out while diagnosing the token-exchange failure, all confirmed via
-  direct inspection (Management API `GET /clients/{id}`, `GET
-  /.well-known/oauth-protected-resource`) rather than guesswork:
-  `token_endpoint_auth_method` (correctly `none`, matching the hosted CIMD
-  document), `app_type` (defaulted to `native` since `CimdMetadataDocument`
-  has no `application_type` field - explicitly set to `web` via the
-  Management API, no change), the RFC 8707 `resource` identifier (byte-for-
-  byte match between `Server`'s protected-resource metadata and the Auth0
-  API's identifier), RBAC/API permission settings, cached-session/silent-SSO
-  consent skipping (reproduced identically in a fresh incognito session -
-  and no consent screen was ever shown at all, even before the token
-  exchange, which is itself unexplained for a third-party app), Actions/
-  Rules on the Login flow (none defined), and Attack Protection/IP
-  throttling (temporarily disabled, no change). Next step if picked back up:
-  Auth0 support, who have server-side log detail the Dashboard doesn't
-  expose - the generic, information-free `access_denied` here reads as
-  either an undocumented CIMD + strict-third-party + Resource Parameter
-  Compatibility Profile interaction, or a platform bug in a fairly new
-  Auth0 feature combination, not a configuration gap in this repo's
-  `Client`/`Server` code (both confirmed correctly configured against every
-  angle above). `appsettings.Auth0.json` (`Client` and `Server`) hold real,
-  working tenant/tunnel values for whenever this is resumed.

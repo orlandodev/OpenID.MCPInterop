@@ -36,9 +36,7 @@ dotnet test                                                          # all tests
 dotnet test --filter "FullyQualifiedName~CimdMetadataDocumentTests"  # single class
 dotnet test --filter "ClientId_ShouldMatch_HostedDocumentUrl"        # single test
 dotnet run --project src/OpenID.MCPInterop.Server                                   # Keycloak scenario (default profile)
-dotnet run --project src/OpenID.MCPInterop.Server --launch-profile Auth0            # validates tokens from a real Auth0 tenant
 dotnet run --project src/OpenID.MCPInterop.Client --launch-profile Keycloak         # CIMD + EMA legs, this repo's own Keycloak
-dotnet run --project src/OpenID.MCPInterop.Client --launch-profile Auth0            # CIMD leg against a real Auth0 tenant
 dotnet run --project src/OpenID.MCPInterop.Client --launch-profile 11AIBlockchain   # Leg 3, direct-trust, no CIMD
 dotnet run --project src/OpenID.MCPInterop.Issuer
 ```
@@ -73,14 +71,13 @@ Four projects, one shared kernel:
   protected-resource metadata), and `RequireAuthorization()` gates every MCP
   route - see `AuthorizationOptions.cs`/`Program.cs`. Like `Client`, it's
   config-driven across named scenarios (`Keycloak` - the default profile,
-  matches `Client`'s `Keycloak` scenario - and `Auth0`, for validating
-  tokens from a real Auth0 tenant; see `appsettings.{Scenario}.json`).
+  matches `Client`'s `Keycloak` scenario; see `appsettings.{Scenario}.json`).
   Tools are static methods on `[McpServerToolType]` classes tagged
   `[McpServerTool]` (see `DemoTools.Ping()`).
 - **`OpenID.MCPInterop.Client`** - MCP client test harness, browser-driven
   (a web UI with a Connect button and human-readable session log, not an
-  auto-run console app) and config-driven across three named scenarios
-  (`ASPNETCORE_ENVIRONMENT`/`--launch-profile`: `Keycloak`, `Auth0`,
+  auto-run console app) and config-driven across named scenarios
+  (`ASPNETCORE_ENVIRONMENT`/`--launch-profile`: `Keycloak`,
   `11AIBlockchain` - see `appsettings.{Scenario}.json` and
   `docs/architecture.md`'s "Named scenarios"). `Client:UseCimd` toggles the
   primary leg between CIMD (hosts its own `CimdMetadataDocument`, drives a

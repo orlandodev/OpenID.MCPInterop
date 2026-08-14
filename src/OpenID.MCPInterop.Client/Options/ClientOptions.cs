@@ -7,7 +7,7 @@ namespace OpenID.MCPInterop.Client.Options;
 /// toggles select - CIMD (hosted <see cref="CimdDocumentUrl"/>), direct-trust
 /// (pre-registered <see cref="ClientId"/>/<see cref="ClientSecret"/> at
 /// <see cref="Authority"/>), and optionally EMA on top of either. See
-/// docs/architecture.md for how the three named scenarios (Keycloak, Auth0,
+/// docs/architecture.md for how the named scenarios (Keycloak,
 /// 11AIBlockchain) map onto these toggles.
 /// </summary>
 public sealed class ClientOptions : IValidatableObject
