@@ -1,10 +1,10 @@
 {
   "profiles": {
-    "OpenID.MCPInterop.Server": {
+    "Keycloak": {
       "commandName": "Project",
       "launchBrowser": false,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Keycloak"
       },
       "applicationUrl": "http://localhost:5000"
     }

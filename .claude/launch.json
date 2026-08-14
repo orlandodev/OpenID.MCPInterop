@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "client-keycloak",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "src/OpenID.MCPInterop.Client", "--launch-profile", "Keycloak"],
+      "port": 5050,
+      "url": "https://localhost:5050"
+    }
+  ]
+}

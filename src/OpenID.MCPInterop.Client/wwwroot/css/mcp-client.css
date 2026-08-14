@@ -1,0 +1,550 @@
+/* ============================================================================
+   mcp-client.css — styles for the MCP client dev-tool UI mockup.
+
+   DEPENDENCY: the Industry design system stylesheet must be loaded FIRST.
+   It provides the tokens (--color-*, --font-*, --space-*, --radius-*,
+   --shadow-*) and the component classes used here: .btn / .btn-primary /
+   .btn-secondary / .btn-ghost, .tag / .tag-accent / .tag-neutral /
+   .tag-outline, .field / .input, .blueprint + <i class="corner tl|tr|bl|br">.
+
+     <link rel="stylesheet" href="industry/styles.css">
+     <link rel="stylesheet" href="mcp-client.css">
+
+   Fonts: Barlow Condensed (headings) + Barlow (body) come from Industry.
+   Icons: Lucide, stroke-width 1.5.
+
+   MARKUP MAP (see bottom of file for the full skeleton)
+     .mcp-app        > .mcp-sidebar + .mcp-main
+     .mcp-main       > .mcp-header + .mcp-body
+     .mcp-body       > .mcp-work (.mcp-toollist + .mcp-detail) + .mcp-console
+   ========================================================================= */
+
+/* --- local, non-token values --------------------------------------------- */
+:root {
+  --mcp-sidebar-w: 264px;
+  --mcp-toollist-w: 290px;
+  --mcp-detail-max: 760px;
+  --mcp-console-h: 212px;
+  --mcp-console-h-collapsed: 38px;
+  --mcp-mono: ui-monospace, SFMono-Regular, Menlo, "Roboto Mono", monospace;
+
+  /* derived ink levels — keep these instead of new hexes */
+  --mcp-ink-70: color-mix(in srgb, var(--color-text) 68%, transparent);
+  --mcp-ink-50: color-mix(in srgb, var(--color-text) 50%, transparent);
+  --mcp-ink-45: color-mix(in srgb, var(--color-text) 45%, transparent);
+  --mcp-accent-tint: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  --mcp-rule-soft: color-mix(in srgb, var(--color-text) 8%, transparent);
+
+  /* console (accent-900 field, paper-side type) */
+  --mcp-console-fg: var(--color-accent-200);
+  --mcp-console-rule: color-mix(in srgb, #f2f2f3 14%, transparent);
+  --mcp-log-info: #d6ebff;
+  --mcp-log-dim: color-mix(in srgb, #d6ebff 55%, transparent);
+  --mcp-log-ok: #9fd3a8;
+  --mcp-log-err: #e6a6a6;
+}
+
+/* --- app shell ----------------------------------------------------------- */
+html, body { height: 100%; }
+body {
+  margin: 0;
+  overflow: hidden;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+
+.mcp-app { height: 100vh; display: flex; }
+
+.mcp-sidebar {
+  width: var(--mcp-sidebar-w);
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--color-divider);
+  overflow-x: hidden;
+}
+
+.mcp-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+/* Console is a flex SIBLING of the work area, never an overlay — the detail
+   pane keeps its own scroll space. */
+.mcp-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.mcp-work { flex: 1; min-height: 0; min-width: 0; display: flex; }
+
+/* --- brand / sidebar chrome ---------------------------------------------- */
+.mcp-brand {
+  padding: 16px 16px 12px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border-bottom: 1px solid var(--color-divider);
+}
+.mcp-brand-mark {
+  width: 22px; height: 22px; flex: none;
+  border: 1px solid var(--color-accent);
+  display: grid; place-items: center;
+}
+.mcp-brand-mark::before { content: ""; width: 8px; height: 8px; background: var(--color-accent); }
+.mcp-brand-name {
+  font-family: var(--font-heading);
+  font-weight: 600; font-size: 17px; line-height: 1; letter-spacing: -0.01em;
+}
+.mcp-brand-version { margin-left: auto; }
+
+/* Section label used above sidebar and tool-list groups. Pair with an <h6>
+   from Industry's type scale where a real heading is wanted. */
+.mcp-section-head {
+  padding: 16px 16px 8px;
+  display: flex; align-items: baseline; justify-content: space-between;
+}
+.mcp-section-head > h6 { margin: 0; }
+.mcp-count { font: 400 11px/1 var(--font-body); color: var(--mcp-ink-45); }
+
+.mcp-sidebar-pad { padding: 0 16px; }
+.mcp-sidebar-actions { padding: 10px 16px 0; display: flex; gap: 8px; }
+.mcp-sidebar-actions > .btn { font-size: 13px; }
+.mcp-sidebar-foot { margin-top: auto; padding: 16px; }
+
+/* --- server list (multi-server variant) ---------------------------------- */
+.mcp-server-list {
+  display: flex; flex-direction: column; gap: 1px;
+  padding: 0 8px;
+  overflow-y: auto;
+}
+.mcp-server {
+  all: unset;
+  cursor: pointer;
+  display: block;
+  padding: 9px 10px;
+  font-family: var(--font-body);
+  border-left: 2px solid transparent;
+}
+.mcp-server:hover { background: color-mix(in srgb, var(--color-text) 6%, transparent); }
+.mcp-server:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.mcp-server[aria-current="true"] { border-left-color: var(--color-accent); background: var(--mcp-accent-tint); }
+.mcp-server-name { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 500; letter-spacing: -0.005em; }
+.mcp-server-endpoint {
+  margin-left: 13px;
+  font-family: var(--mcp-mono); font-size: 11px;
+  color: var(--mcp-ink-45);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* status dot — .is-off greys it, .is-live pulses it */
+.mcp-dot { width: 6px; height: 6px; flex: none; border-radius: 50%; background: var(--color-accent); }
+.mcp-dot.is-off { background: var(--color-neutral-400); }
+.mcp-dot.is-live { animation: mcp-pulse 2s ease-in-out infinite; }
+@keyframes mcp-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+@media (prefers-reduced-motion: reduce) { .mcp-dot.is-live { animation: none; } }
+
+/* --- single-connection panel + token inspector --------------------------- */
+/* Both are .blueprint boxes: keep the four corner marks. */
+.mcp-panel { padding: 12px; display: flex; flex-direction: column; gap: 9px; }
+.mcp-panel-title { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 500; letter-spacing: -0.005em; }
+.mcp-panel-endpoint {
+  font-family: var(--mcp-mono); font-size: 11px; line-height: 1.5;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  word-break: break-all;
+}
+
+/* key/value rows: label column + monospace value */
+.mcp-kv { display: grid; grid-template-columns: 66px 1fr; gap: 8px; font-size: 11px; line-height: 1.45; }
+.mcp-kv > dt, .mcp-kv-key {
+  font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 42%, transparent);
+  padding-top: 1px;
+}
+.mcp-kv > dd, .mcp-kv-val { margin: 0; font-family: var(--mcp-mono); min-width: 0; }
+.mcp-kv--mono-key { grid-template-columns: 38px 1fr; }
+.mcp-kv--mono-key > dt, .mcp-kv--mono-key .mcp-kv-key {
+  font-family: var(--mcp-mono); font-size: 11px; text-transform: none; letter-spacing: 0;
+}
+.mcp-kv--mono-key > dd, .mcp-kv--mono-key .mcp-kv-val { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.mcp-panel-head { display: flex; align-items: center; justify-content: space-between; }
+.mcp-eyebrow {
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--color-accent-700);
+}
+.mcp-panel-foot {
+  font-size: 11px; color: var(--mcp-ink-50);
+  border-top: 1px solid var(--color-divider); padding-top: 6px;
+}
+
+/* --- main header --------------------------------------------------------- */
+.mcp-header {
+  padding: 13px 22px;
+  display: flex; align-items: center; gap: 14px;
+  border-bottom: 1px solid var(--color-divider);
+}
+.mcp-header-id { min-width: 0; }
+.mcp-header-title { display: flex; align-items: center; gap: 9px; }
+.mcp-header-title > h4 { margin: 0; letter-spacing: -0.01em; }
+.mcp-header-meta {
+  margin-top: 3px;
+  font-family: var(--mcp-mono); font-size: 11.5px;
+  color: color-mix(in srgb, var(--color-text) 48%, transparent);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mcp-header-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.mcp-header-actions > .btn { font-size: 13px; }
+
+/* live tag: an Industry .tag-accent with a pulsing dot inside */
+.tag > .mcp-dot { background: currentColor; width: 5px; height: 5px; }
+
+/* --- tool catalog -------------------------------------------------------- */
+.mcp-toollist {
+  width: var(--mcp-toollist-w);
+  max-width: 38%;
+  min-width: 212px;   /* floor: keeps the tool names legible */
+  flex: 0 1 auto;
+  display: flex; flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--color-divider);
+}
+.mcp-toollist-head { padding: 14px 16px 10px; display: flex; align-items: baseline; justify-content: space-between; }
+.mcp-toollist-head > h6 { margin: 0; }
+.mcp-toollist-scroll {
+  overflow-y: auto; overflow-x: hidden;   /* clip: .blueprint corner marks sit outside the box */
+  padding: 0 10px 14px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.mcp-tool {
+  all: unset;
+  cursor: pointer;
+  display: block;
+  padding: 10px 11px;
+  border: 1px solid var(--color-divider);
+  font-family: var(--font-body);
+}
+.mcp-tool:hover { border-color: var(--color-accent); }
+.mcp-tool:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.mcp-tool[aria-current="true"] { border-color: var(--color-accent); background: var(--mcp-accent-tint); }
+.mcp-tool-row { display: flex; align-items: center; gap: 7px; }
+.mcp-tool-name {
+  font-family: var(--mcp-mono); font-size: 12.5px; font-weight: 500;
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.mcp-tool-badge {
+  margin-left: auto; flex: none; white-space: nowrap;
+  font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--color-accent-700);
+}
+.mcp-tool-blurb { margin-top: 4px; font-size: 11.5px; line-height: 1.4; color: color-mix(in srgb, var(--color-text) 60%, transparent); }
+
+/* --- tool detail --------------------------------------------------------- */
+.mcp-detail {
+  flex: 1;
+  min-width: 340px;   /* floor: never squeezed out by the side columns */
+  overflow-y: auto; overflow-x: hidden;
+  padding: 20px 22px 26px;
+}
+.mcp-detail-col { max-width: var(--mcp-detail-max); display: flex; flex-direction: column; gap: 18px; }
+
+.mcp-tool-title { display: flex; align-items: center; gap: 10px; }
+.mcp-tool-title > h3 {
+  margin: 0;
+  font-family: var(--mcp-mono); font-size: 19px; font-weight: 500; letter-spacing: -0.01em;
+}
+.mcp-tool-desc {
+  margin: 6px 0 0;
+  font-size: 13.5px; max-width: 62ch;
+  color: var(--mcp-ink-70);
+  text-wrap: pretty;
+}
+
+/* --- invoke card (.blueprint) -------------------------------------------- */
+.mcp-card { padding: 16px; }
+.mcp-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.mcp-card-head > h6 { margin: 0; }
+
+/* Fields ↔ JSON toggle. Prefer Industry's .seg/.seg-opt if you want the
+   system control; this is the compact two-up used in the mockup. */
+.mcp-toggle { display: flex; }
+.mcp-toggle > button {
+  all: unset;
+  cursor: pointer;
+  padding: 5px 11px;
+  font-size: 11.5px;
+  border: 1px solid var(--color-divider);
+}
+.mcp-toggle > button + button { border-left: 0; }
+.mcp-toggle > button:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.mcp-toggle > button[aria-pressed="true"] { background: var(--color-accent); color: var(--color-bg); }
+
+/* schema-driven form: two columns, .is-wide spans both */
+.mcp-params { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+.mcp-params > .is-wide { grid-column: span 2; }
+.mcp-params .field > label { font-family: var(--mcp-mono); font-size: 11.5px; }
+.mcp-param-req { color: var(--color-accent-700); }
+.mcp-param-type { color: color-mix(in srgb, var(--color-text) 40%, transparent); }
+@media (max-width: 900px) {
+  .mcp-params { grid-template-columns: 1fr; }
+  .mcp-params > .is-wide { grid-column: auto; }
+}
+
+.mcp-code {
+  margin: 0;
+  padding: 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  font: 400 12.5px/1.65 var(--mcp-mono);
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+
+.mcp-card-actions {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 16px; padding-top: 14px;
+  border-top: 1px solid var(--color-divider);
+}
+.mcp-card-actions .btn-primary { font-size: 14px; padding: 8px 18px; }
+.mcp-card-actions .btn-secondary { font-size: 13px; }
+.mcp-endpoint-hint {
+  margin-left: auto;
+  font-family: var(--mcp-mono); font-size: 11px;
+  color: var(--mcp-ink-45);
+}
+
+/* --- governance decision ------------------------------------------------- */
+.mcp-decision { padding: 0; display: flex; flex-direction: column; }
+.mcp-verdict {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--color-divider);
+  background: var(--mcp-accent-tint);
+}
+.mcp-verdict-word {
+  font-family: var(--font-heading);
+  font-weight: 600; font-size: 22px; letter-spacing: 0.04em;
+  color: var(--color-accent-800);
+}
+.mcp-verdict.is-deny { background: color-mix(in srgb, var(--color-neutral-900) 8%, transparent); }
+.mcp-verdict.is-deny .mcp-verdict-word { color: var(--color-neutral-900); }
+.mcp-verdict-reason { font-size: 12.5px; color: color-mix(in srgb, var(--color-text) 65%, transparent); text-wrap: pretty; }
+.mcp-verdict-latency {
+  margin-left: auto; white-space: nowrap;
+  font-family: var(--mcp-mono); font-size: 11px;
+  color: var(--mcp-ink-50);
+}
+
+/* claim grid — reflows to one column when narrow, values wrap rather than clip */
+.mcp-decision-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(268px, 1fr)); }
+.mcp-decision-row {
+  display: flex; gap: 10px; min-width: 0;
+  padding: 9px 16px;
+  border-bottom: 1px solid var(--mcp-rule-soft);
+}
+.mcp-decision-key {
+  width: 82px; flex: none; padding-top: 2px;
+  font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--mcp-ink-45);
+}
+.mcp-decision-val { font-family: var(--mcp-mono); font-size: 12px; min-width: 0; word-break: break-all; }
+.mcp-result { padding: 14px 16px; }
+.mcp-result > .mcp-eyebrow { display: block; margin-bottom: 7px; color: var(--mcp-ink-45); }
+
+/* --- console (bottom dock, accent-900 field) ----------------------------- */
+.mcp-console {
+  flex: none;
+  height: var(--mcp-console-h);
+  display: flex; flex-direction: column;
+  min-height: 0;
+  background: var(--color-accent-900);
+  color: var(--mcp-console-fg);
+  border-top: 1px solid var(--color-divider);
+}
+.mcp-console.is-collapsed { height: var(--mcp-console-h-collapsed); }
+.mcp-console.is-collapsed .mcp-console-body { display: none; }
+
+.mcp-console-resize-handle {
+  flex: none;
+  height: 6px;
+  margin: -3px 0 -3px;
+  cursor: ns-resize;
+  background: transparent;
+  touch-action: none;
+}
+.mcp-console-resize-handle:hover,
+.mcp-console-resize-handle.is-dragging {
+  background: var(--color-accent-300);
+}
+.mcp-console.is-collapsed .mcp-console-resize-handle {
+  display: none;
+}
+
+.mcp-console-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 16px;
+  border-bottom: 1px solid var(--mcp-console-rule);
+}
+.mcp-console-label {
+  font-family: var(--font-heading);
+  font-weight: 600; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase;
+}
+.mcp-console-bar .mcp-dot { background: var(--color-accent-300); width: 5px; height: 5px; }
+.mcp-console-count { flex: none; white-space: nowrap; font-family: var(--mcp-mono); font-size: 11px; opacity: 0.55; }
+.mcp-console-actions { margin-left: auto; flex: none; display: flex; gap: 14px; }
+.mcp-console-actions > button {
+  all: unset;
+  cursor: pointer;
+  font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--color-accent-300);
+}
+.mcp-console-actions > button:hover { color: #fff; }
+.mcp-console-actions > button:focus-visible { outline: 2px solid var(--color-accent-300); outline-offset: 2px; }
+
+.mcp-console-body {
+  flex: 1; min-height: 0;
+  overflow-y: auto;
+  padding: 10px 16px 14px;
+  font: 400 12px/1.7 var(--mcp-mono);
+}
+.mcp-log-line { display: flex; gap: 12px; white-space: pre-wrap; word-break: break-word; }
+.mcp-log-time { flex: none; opacity: 0.45; }
+.mcp-log-text { color: var(--mcp-log-info); }
+.mcp-log-line.is-dim  .mcp-log-text { color: var(--mcp-log-dim); }
+.mcp-log-line.is-ok   .mcp-log-text { color: var(--mcp-log-ok); }
+.mcp-log-line.is-err  .mcp-log-text { color: var(--mcp-log-err); }
+
+/* --- links, scrollbars, focus ------------------------------------------- */
+a { color: var(--color-accent-700); text-decoration: none; }
+a:hover { color: var(--color-accent); text-decoration: underline; }
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--color-text) 20%, transparent); }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ============================================================================
+   MARKUP SKELETON (reference — delete when implemented)
+
+   <div class="mcp-app">
+     <aside class="mcp-sidebar">
+       <div class="mcp-brand">
+         <span class="mcp-brand-mark"></span>
+         <span class="mcp-brand-name">MCPInterop</span>
+         <span class="mcp-brand-version mcp-eyebrow">v0.4</span>
+       </div>
+
+       <!-- multi-server variant -->
+       <div class="mcp-section-head"><h6>Servers</h6><span class="mcp-count">3 known</span></div>
+       <div class="mcp-server-list">
+         <button class="mcp-server" aria-current="true">
+           <span class="mcp-server-name"><span class="mcp-dot"></span>11-11-governed-mcp</span>
+           <span class="mcp-server-endpoint">control.example.com/mcp-interop</span>
+         </button>
+       </div>
+       <div class="mcp-sidebar-actions"><button class="btn btn-secondary" style="flex:1">+ Add server</button></div>
+
+       <!-- single-connection variant: .blueprint panel instead of the list -->
+       <div class="mcp-sidebar-pad">
+         <div class="blueprint mcp-panel">
+           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+           <div class="mcp-panel-title"><span class="mcp-dot is-live"></span>11-11-governed-mcp</div>
+           <div class="mcp-panel-endpoint">control.example.com/mcp-interop</div>
+           <dl class="mcp-kv"><dt>transport</dt><dd>HTTP + SSE</dd></dl>
+         </div>
+       </div>
+
+       <div class="mcp-sidebar-foot">
+         <div class="blueprint mcp-panel">
+           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+           <div class="mcp-panel-head"><span class="mcp-eyebrow">Access token</span><span class="tag tag-accent">at+jwt</span></div>
+           <dl class="mcp-kv mcp-kv--mono-key"><dt>iss</dt><dd>…</dd></dl>
+           <div class="mcp-panel-foot">Expires in 3 h 58 m</div>
+         </div>
+       </div>
+     </aside>
+
+     <main class="mcp-main">
+       <header class="mcp-header">
+         <div class="mcp-header-id">
+           <div class="mcp-header-title">
+             <h4>11-11-governed-mcp</h4>
+             <span class="tag tag-accent"><span class="mcp-dot is-live"></span>Connected</span>
+             <span class="tag tag-outline">direct-trust</span>
+           </div>
+           <div class="mcp-header-meta">control.example.com/mcp-interop · no CIMD · no ID-JAG</div>
+         </div>
+         <div class="mcp-header-actions"><button class="btn btn-secondary">Architecture</button></div>
+       </header>
+
+       <div class="mcp-body">
+         <section class="mcp-work">
+           <div class="mcp-toollist">
+             <div class="mcp-toollist-head"><h6>Tools</h6><span class="mcp-count">2 discovered</span></div>
+             <div class="mcp-toollist-scroll">
+               <button class="mcp-tool" aria-current="true">
+                 <span class="mcp-tool-row">
+                   <span class="mcp-tool-name">governed_echo</span>
+                   <span class="mcp-tool-badge">governed</span>
+                 </span>
+                 <span class="mcp-tool-blurb">Echo a message, if the control plane authorizes it.</span>
+               </button>
+             </div>
+           </div>
+
+           <div class="mcp-detail">
+             <div class="mcp-detail-col">
+               <div>
+                 <div class="mcp-tool-title"><h3>governed_echo</h3><span class="tag tag-neutral">no side effects</span></div>
+                 <p class="mcp-tool-desc">…</p>
+               </div>
+
+               <div class="blueprint mcp-card">
+                 <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+                 <div class="mcp-card-head">
+                   <h6>Input</h6>
+                   <div class="mcp-toggle">
+                     <button aria-pressed="true">Fields</button><button aria-pressed="false">JSON</button>
+                   </div>
+                 </div>
+                 <div class="mcp-params">
+                   <div class="field is-wide">
+                     <label>message<span class="mcp-param-req">*</span> <span class="mcp-param-type">string</span></label>
+                     <input class="input">
+                   </div>
+                 </div>
+                 <div class="mcp-card-actions">
+                   <button class="btn btn-primary">Invoke</button>
+                   <button class="btn btn-secondary">Ask decision only</button>
+                   <span class="mcp-endpoint-hint">POST /mcp/tools/call</span>
+                 </div>
+               </div>
+
+               <div class="blueprint mcp-decision">
+                 <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+                 <div class="mcp-verdict">           <!-- add .is-deny for DENY -->
+                   <span class="mcp-verdict-word">ALLOW</span>
+                   <span class="mcp-verdict-reason">Policy interop-baseline/v3 matched…</span>
+                   <span class="mcp-verdict-latency">112 ms · 2 hops</span>
+                 </div>
+                 <div class="mcp-decision-grid">
+                   <div class="mcp-decision-row"><span class="mcp-decision-key">policy</span><span class="mcp-decision-val">interop-baseline/v3</span></div>
+                 </div>
+                 <div class="mcp-result">
+                   <span class="mcp-eyebrow">Tool result</span>
+                   <pre class="mcp-code">{ … }</pre>
+                 </div>
+               </div>
+             </div>
+           </div>
+         </section>
+
+         <section class="mcp-console">        <!-- add .is-collapsed to collapse -->
+           <div class="mcp-console-bar">
+             <span class="mcp-console-label">Log</span>
+             <span class="mcp-dot is-live"></span>
+             <span class="mcp-console-count">8 events</span>
+             <div class="mcp-console-actions"><button>Collapse</button><button>Clear</button></div>
+           </div>
+           <div class="mcp-console-body">
+             <div class="mcp-log-line is-ok"><span class="mcp-log-time">16:25:56</span><span class="mcp-log-text">Connected…</span></div>
+           </div>
+         </section>
+       </div>
+     </main>
+   </div>
+   ========================================================================= */

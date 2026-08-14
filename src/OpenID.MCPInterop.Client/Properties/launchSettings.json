@@ -1,10 +1,18 @@
 {
   "profiles": {
-    "OpenID.MCPInterop.Client": {
+    "Keycloak": {
       "commandName": "Project",
-      "launchBrowser": false,
+      "launchBrowser": true,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Keycloak"
+      },
+      "applicationUrl": "https://localhost:5050"
+    },
+    "11AIBlockchain": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "11AIBlockchain"
       },
       "applicationUrl": "https://localhost:5050"
     }
