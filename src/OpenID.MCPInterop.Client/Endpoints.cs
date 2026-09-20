@@ -252,19 +252,19 @@ public static class Endpoints
                 var isError = result.IsError == true;
                 var outcome = isError ? "ERROR" : "result";
                 session.AppendLog($"Tool '{name}' ({normalizedLeg}) {outcome}: {contentSummary}{structuredSummary}");
-                session.SetLastResult(normalizedLeg, new ToolInvocationResult(name, isError, contentSummary + structuredSummary, stopwatch.Elapsed, DateTimeOffset.Now));
+                session.SetLastResult(normalizedLeg, new ToolInvocationResult(name, isError, contentSummary + structuredSummary, stopwatch.Elapsed, DateTimeOffset.UtcNow));
             }
             catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
             {
                 stopwatch.Stop();
                 session.AppendLog($"Tool '{name}' ({normalizedLeg}) timed out after 30s with no response from the server.");
-                session.SetLastResult(normalizedLeg, new ToolInvocationResult(name, true, "(timed out after 30s)", stopwatch.Elapsed, DateTimeOffset.Now));
+                session.SetLastResult(normalizedLeg, new ToolInvocationResult(name, true, "(timed out after 30s)", stopwatch.Elapsed, DateTimeOffset.UtcNow));
             }
             catch (Exception ex)
             {
                 stopwatch.Stop();
                 session.AppendLog($"Tool '{name}' ({normalizedLeg}) failed: {ex.Message}");
-                session.SetLastResult(normalizedLeg, new ToolInvocationResult(name, true, ex.Message, stopwatch.Elapsed, DateTimeOffset.Now));
+                session.SetLastResult(normalizedLeg, new ToolInvocationResult(name, true, ex.Message, stopwatch.Elapsed, DateTimeOffset.UtcNow));
             }
 
             return RenderPageOrFragment(context, antiforgery, session, options, serverEndpointOptions, emaOptions);
@@ -356,10 +356,20 @@ public static class Endpoints
                 // that realm role - drop it instead of trying to satisfy it. Always
                 // logs the candidate scopes first, so what the WWW-Authenticate/PRM/
                 // config actually requested is visible, not just the filtered result.
+                // ForceEmptyScope overrides those candidates entirely - see its doc
+                // comment on ClientOptions for why an empty Scopes array can't do
+                // this on its own.
                 ScopeSelector = candidateScopes =>
                 {
                     var candidates = candidateScopes?.ToArray() ?? [];
                     session.AppendLog($"Scopes requested (WWW-Authenticate/PRM/config): {(candidates.Length == 0 ? "(none)" : string.Join(' ', candidates))}");
+
+                    if (options.ForceEmptyScope)
+                    {
+                        session.AppendLog("Client:ForceEmptyScope is true - requesting no scope, overriding the WWW-Authenticate/PRM candidates (missing-scope negative test).");
+                        return [];
+                    }
+
                     return candidates.Where(scope => scope != "offline_access");
                 },
                 AuthorizationCallbackHandler = (context, ct) =>
