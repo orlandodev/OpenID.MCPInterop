@@ -87,7 +87,7 @@ public sealed class ClientSessionState
     {
         lock (_log)
         {
-            _log.Add((DateTimeOffset.Now, message));
+            _log.Add((DateTimeOffset.UtcNow, message));
         }
     }
 

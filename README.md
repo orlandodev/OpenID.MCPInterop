@@ -28,8 +28,30 @@ OpenID.MCPInterop.sln
 └── docs/
     ├── architecture.md
     ├── keycloak-setup.md
-    └── observability.md
+    ├── observability.md
+    └── MCP_client.png       Screenshot of the Client test harness UI
 ```
+
+## The Client test harness
+
+`OpenID.MCPInterop.Client` is a browser-driven MCP client: a small web UI
+with a **Connect** button and a human-readable session log that walks each
+OAuth step as it happens (authorization redirect, token exchange, tool
+call), rather than an auto-run console app. It's config-driven across named
+scenarios (`--launch-profile` / `ASPNETCORE_ENVIRONMENT`), so the same UI
+drives the CIMD Agent Governance leg against this repo's Keycloak
+(`Keycloak`), the direct-trust Leg 3 flow (`11AIBlockchain`), or the CIMD
+leg against a third-party AS + external MCP server (which
+needs a public tunnel to the Client); the EMA / ID-JAG cross-org leg is a
+further opt-in on the `Keycloak` scenario. The log
+pane can be resized by drag and copied to the clipboard for pasting into
+interop bug reports.
+
+```bash
+dotnet run --project src/OpenID.MCPInterop.Client --launch-profile Keycloak
+```
+
+![The Client test harness web UI](docs/MCP_client.png)
 
 ## Getting started
 
