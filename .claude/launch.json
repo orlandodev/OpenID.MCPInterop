@@ -7,6 +7,12 @@
       "runtimeArgs": ["run", "--project", "src/OpenID.MCPInterop.Client", "--launch-profile", "Keycloak"],
       "port": 5050,
       "url": "https://localhost:5050"
+    },
+    {
+      "name": "server-keycloak",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "src/OpenID.MCPInterop.Server", "--launch-profile", "Keycloak"],
+      "port": 5000
     }
   ]
 }

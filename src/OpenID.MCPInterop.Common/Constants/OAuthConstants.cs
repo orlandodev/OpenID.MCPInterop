@@ -24,6 +24,12 @@ public static class OAuthConstants
     // --- CIMD (draft-ietf-oauth-client-id-metadata-document) ---
     public const string CimdMetadataSupportedField = "client_id_metadata_document_supported";
 
+    // token_endpoint_auth_method for a public (PKCE-only) CIMD client. The
+    // confidential alternative, private_key_jwt, and the RFC 7523 client
+    // assertion strings come from Duende.IdentityModel's OidcConstants,
+    // which has no constant for "none".
+    public const string NoneTokenEndpointAuthMethod = "none";
+
     // --- ID-JAG claim names (minted by Issuer, see Common/Models/IdJagClaims.cs) ---
     public const string ClientIdClaim = "client_id";
     public const string ResourceClaim = "resource";

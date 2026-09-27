@@ -1,3 +1,4 @@
+using System.Text.Json;
 using OpenID.MCPInterop.Common.Models;
 using Xunit;
 
@@ -36,5 +37,35 @@ public class CimdMetadataDocumentTests
         // Keycloak discovery-doc bug mentioned in docs/architecture.md where
         // "none" doesn't show up in token_endpoint_auth_methods_supported yet.
         Assert.Equal("none", document.TokenEndpointAuthMethod);
+    }
+
+    [Fact]
+    public void JwksUri_ShouldSerialize_As_jwks_uri()
+    {
+        var document = new CimdMetadataDocument
+        {
+            ClientId = "https://localhost:5050/client-metadata.json",
+            RedirectUris = ["http://127.0.0.1:5100/callback"],
+            TokenEndpointAuthMethod = "private_key_jwt",
+            JwksUri = "https://localhost:5050/jwks.json",
+        };
+
+        var json = JsonSerializer.Serialize(document);
+
+        Assert.Contains("\"jwks_uri\":\"https://localhost:5050/jwks.json\"", json);
+    }
+
+    [Fact]
+    public void JwksUri_ShouldBeOmitted_ForPublicClient()
+    {
+        var document = new CimdMetadataDocument
+        {
+            ClientId = "https://localhost:5050/client-metadata.json",
+            RedirectUris = ["http://127.0.0.1:5100/callback"],
+        };
+
+        var json = JsonSerializer.Serialize(document);
+
+        Assert.DoesNotContain("jwks_uri", json);
     }
 }

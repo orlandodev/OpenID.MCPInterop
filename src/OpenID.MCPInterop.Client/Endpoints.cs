@@ -39,12 +39,13 @@ namespace OpenID.MCPInterop.Client;
 /// </summary>
 public static class Endpoints
 {
-    public static WebApplication MapClientEndpoints(
+    internal static WebApplication MapClientEndpoints(
         this WebApplication app,
         ClientOptions options,
         ServerEndpointOptions serverEndpointOptions,
         EmaOptions? emaOptions,
-        CimdMetadataDocument? cimdDocument)
+        CimdMetadataDocument? cimdDocument,
+        ClientSigningKey? signingKey)
     {
         if (options.UseCimd && cimdDocument is not null)
         {
@@ -53,6 +54,15 @@ public static class Endpoints
             // it server-to-server the first time it sees this client_id at
             // the authorization endpoint.
             app.MapGet("/client-metadata.json", () => Results.Json(cimdDocument));
+        }
+
+        if (signingKey is not null && options.JwksUri is not null)
+        {
+            // The CIMD document's jwks_uri (CIMD section 8.2) - the AS fetches
+            // the public key from here to verify this client's private_key_jwt
+            // assertions. Public half only, per CIMD section 4.1.
+            var jwks = signingKey.ToJwks();
+            app.MapGet(new Uri(options.JwksUri).AbsolutePath, () => Results.Json(jwks));
         }
 
         app.MapGet("/", (HttpContext context, IAntiforgery antiforgery, ClientSessionState session) =>
@@ -88,7 +98,7 @@ public static class Endpoints
 
             var authorizationUriReady = new TaskCompletionSource<Uri>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-            _ = Task.Run(() => RunConnectionAsync(options, serverEndpointOptions, session, authorizationUriReady, cancellationToken));
+            _ = Task.Run(() => RunConnectionAsync(options, serverEndpointOptions, signingKey, session, authorizationUriReady, cancellationToken));
 
             try
             {
@@ -340,6 +350,7 @@ public static class Endpoints
     private static async Task RunConnectionAsync(
         ClientOptions options,
         ServerEndpointOptions serverEndpointOptions,
+        ClientSigningKey? signingKey,
         ClientSessionState session,
         TaskCompletionSource<Uri> authorizationUriReady,
         CancellationToken cancellationToken)
@@ -388,7 +399,13 @@ public static class Endpoints
             // HttpDiagnosticsHandler makes the 401/WWW-Authenticate challenge and the
             // PRM fetch (and every other request this connection makes) visible in the
             // Log, so they can be corroborated independently instead of just inferred.
-            var httpClient = new HttpClient(new HttpDiagnosticsHandler(session.AppendLog));
+            // PrivateKeyJwtHandler (private_key_jwt CIMD scenarios only) adds
+            // the RFC 7523 client_assertion to the SDK's token requests.
+            var httpClient = new HttpClient(new HttpDiagnosticsHandler(
+                session.AppendLog,
+                signingKey is null
+                    ? null
+                    : new PrivateKeyJwtHandler(options.CimdDocumentUrl!, signingKey, TimeProvider.System, session.AppendLog, new HttpClientHandler())));
 
             var transport = new HttpClientTransport(
                 new HttpClientTransportOptions

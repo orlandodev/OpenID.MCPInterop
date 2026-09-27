@@ -65,6 +65,13 @@ how much is config-only depends on which piece:
   `Client:ClientId`/`ClientSecret`/`Authority` instead (Leg 3, direct-trust -
   no CIMD document, no protocol capability required of the AS). See "Named
   scenarios" below for how the three appsettings files set this per partner.
+  Under CIMD, `Client:CimdAuthMethod` (default `private_key_jwt`) makes the
+  client confidential per CIMD section 8.2: the document advertises
+  `token_endpoint_auth_method: private_key_jwt` plus a `jwks_uri` (served by
+  `Client` itself at `/jwks.json`, same origin as the CIMD document), and
+  every token request carries an RFC 7523 section 2.2 `client_assertion`
+  signed with a key persisted at `Client:CimdSigningKeyPath`. Set it to
+  `none` for an AS that only accepts public CIMD clients.
 - **`Client`'s EMA leg** is a further opt-in on top of either (`Client:UseEma`),
   with two independent settings under `Ema:` -
   `IdentityProviderAuthority` (arrow 1's login IdP) and `ResourceAuthority`
@@ -97,9 +104,9 @@ sequenceDiagram
     participant Server as MCP Server
 
     Client->>Keycloak: Step 1 - Authorization request (redirect + PKCE)<br/>client_id = hosted CimdMetadataDocument URL
-    Keycloak->>Client: Step 2 - GET client_id (server-to-server)<br/>resolves CimdMetadataDocument JSON
+    Keycloak->>Client: Step 2 - GET client_id (server-to-server)<br/>resolves CimdMetadataDocument JSON (+ GET jwks_uri)
     Keycloak->>Client: Step 3 - Redirect with authorization code
-    Client->>Keycloak: Step 4 - POST /token (code + PKCE verifier) -> access_token
+    Client->>Keycloak: Step 4 - POST /token (code + PKCE verifier<br/>+ private_key_jwt client_assertion) -> access_token
     Client->>Server: Step 5 - Call tool (Authorization: Bearer access_token)
     Server-->>Keycloak: Step 6 - Validate access token (JWKS + aud claim)
     Server->>Client: Step 7 - Tool result (e.g. Ping -> pong)
@@ -363,6 +370,15 @@ ephemeral signing key) matter directly if you're consuming `Issuer` or
   the host's real LAN IP - see `docs/keycloak-setup.md`'s "Podman on
   Windows..." section for the full story and how to keep it in sync if
   your LAN IP changes.
+- MCP SDK 2.0.0's `ClientOAuthOptions` has no `private_key_jwt` support
+  (only `client_secret_*`/`none`) and no client-assertion hook. `Client`
+  works around that with `PrivateKeyJwtHandler`, a `DelegatingHandler` in
+  the transport's `HttpClient` chain that recognizes the SDK's
+  `authorization_code`/`refresh_token` requests for the CIMD `client_id` by
+  their form body and adds `client_assertion_type`/`client_assertion` in
+  flight (claim/field names from Duende.IdentityModel's `OidcConstants`/
+  `JwtClaimTypes`). Replace it with the SDK's own hook if a later version
+  adds one.
 - The MCP SDK rejects a non-HTTPS `ClientMetadataDocumentUri`, so `Client`
   serves its CIMD document over HTTPS using the ASP.NET Core dev cert.
   Trusting that cert in Windows (for your browser) and in Keycloak's Java

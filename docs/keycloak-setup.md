@@ -113,6 +113,32 @@ came from a real `kcadm.sh get realms/mcpinterop` /
 `mcpinterop-realm.json` directly rather than re-deriving it from the admin
 console.
 
+## CIMD client authentication (`private_key_jwt`)
+
+By default (`Client:CimdAuthMethod` = `private_key_jwt`), `Client`'s CIMD
+document advertises `token_endpoint_auth_method: private_key_jwt` and a
+`jwks_uri` of `https://client.dev.internal:5050/jwks.json` (CIMD section
+8.2). No realm-import change is needed: Keycloak picks both up from the
+fetched document and materializes the client as confidential
+(`publicClient: false`, authenticator `client-jwt`, `jwks.url` set, all
+verified 2026-09-26 against 26.7.0). From then on, a token request without
+a valid `client_assertion` fails with `invalid_client`.
+
+- **Signing key**: generated on `Client`'s first run at
+  `src/OpenID.MCPInterop.Client/keys/cimd-signing.pem` (gitignored) and
+  reused afterwards, so its `kid` (an RFC 7638 thumbprint, printed at
+  startup) stays stable across restarts. That's unlike `Issuer`'s per-run key
+  (see the stale-JWKS gotcha under the EMA leg below).
+- **Rotating it**: delete the PEM and restart `Client`. Keycloak has
+  cached both the CIMD document and the old JWKS, so expect `invalid_client`
+  ("Signature on JWT token failed validation") until it refetches. The quickest
+  fix is to delete the materialized CIMD client in the admin console so the
+  next login re-resolves it.
+- **Proving enforcement**: the `cimd-profile` executor's
+  `only-allow-confidential-client` (currently `false`) can be flipped to
+  `true`, which should make Keycloak reject any CIMD document that falls back to
+  `Client:CimdAuthMethod` = `none`. That's unverified: going by the option's name, not tested.
+
 ## If `mcp:tools` didn't auto-attach to the CIMD client
 
 The import sets `mcp:tools` as a realm-wide `defaultOptionalClientScopes`

@@ -81,7 +81,9 @@ Four projects, one shared kernel:
   `11AIBlockchain` - see `appsettings.{Scenario}.json` and
   `docs/architecture.md`'s "Named scenarios"). `Client:UseCimd` toggles the
   primary leg between CIMD (hosts its own `CimdMetadataDocument`, drives a
-  full authorization-code+PKCE flow via the MCP SDK's `ClientOAuthOptions`)
+  full authorization-code+PKCE flow via the MCP SDK's `ClientOAuthOptions`;
+  by default as a `private_key_jwt` confidential client per CIMD section 8.2 -
+  `Client:CimdAuthMethod`, `ClientSigningKey`, `PrivateKeyJwtHandler`)
   and direct-trust (pre-registered `ClientId`/`ClientSecret`, no CIMD
   document - Leg 3). `Client:UseEma` (only `true` for `Keycloak`) enables a
   second, independent leg: a dedicated login against Keycloak for a subject

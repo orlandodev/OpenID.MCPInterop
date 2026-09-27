@@ -26,4 +26,24 @@ public class CimdDocumentFactoryTests
 
         Assert.Contains(redirectUri, document.RedirectUris);
     }
+
+    [Fact]
+    public void PrivateKeyJwt_Document_ShouldAdvertise_AuthMethod_AndJwksUri()
+    {
+        const string jwksUri = "https://client.dev.internal:5050/jwks.json";
+
+        var document = CimdDocumentFactory.Create("https://client.dev.internal:5050/client-metadata.json", "https://127.0.0.1:5050/callback", jwksUri);
+
+        Assert.Equal("private_key_jwt", document.TokenEndpointAuthMethod);
+        Assert.Equal(jwksUri, document.JwksUri);
+    }
+
+    [Fact]
+    public void NoneAuthMethod_Document_ShouldOmit_JwksUri()
+    {
+        var document = CimdDocumentFactory.Create("https://client.dev.internal:5050/client-metadata.json", "https://127.0.0.1:5050/callback");
+
+        Assert.Equal("none", document.TokenEndpointAuthMethod);
+        Assert.Null(document.JwksUri);
+    }
 }

@@ -10,8 +10,11 @@ namespace OpenID.MCPInterop.Client.Auth;
 /// inference. Passed to HttpClientTransport's HttpClient-accepting
 /// constructor, so it also sees the SDK's own internal PRM/discovery/token
 /// calls, not just the tool-call requests this project makes directly.
+/// Outermost in the chain, so it logs requests as they finally went out
+/// (e.g. after PrivateKeyJwtHandler has rewritten a token request).
 /// </summary>
-internal sealed class HttpDiagnosticsHandler(Action<string> log) : DelegatingHandler(new HttpClientHandler())
+internal sealed class HttpDiagnosticsHandler(Action<string> log, HttpMessageHandler? innerHandler = null)
+    : DelegatingHandler(innerHandler ?? new HttpClientHandler())
 {
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {

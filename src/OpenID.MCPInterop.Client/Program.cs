@@ -32,14 +32,22 @@ var app = builder.Build();
 // the UI shell links to - see Endpoints.cs's RenderPageOrFragment.
 app.UseStaticFiles();
 
-var cimdDocument = clientOptions.UseCimd
-    ? CimdDocumentFactory.Create(clientOptions.CimdDocumentUrl!, clientOptions.RedirectUri)
+var signingKey = clientOptions.UsePrivateKeyJwt
+    ? ClientSigningKey.LoadOrCreate(Path.Combine(builder.Environment.ContentRootPath, clientOptions.CimdSigningKeyPath))
     : null;
 
-app.MapClientEndpoints(clientOptions, serverEndpointOptions, emaOptions, cimdDocument);
+var cimdDocument = clientOptions.UseCimd
+    ? CimdDocumentFactory.Create(clientOptions.CimdDocumentUrl!, clientOptions.RedirectUri, clientOptions.JwksUri)
+    : null;
+
+app.MapClientEndpoints(clientOptions, serverEndpointOptions, emaOptions, cimdDocument, signingKey);
 
 Console.WriteLine("OpenID.MCPInterop.Client - MCP interop test harness");
 Console.WriteLine($"Scenario: {builder.Environment.EnvironmentName}");
 Console.WriteLine($"Listening on: {clientOptions.ListenUrl}");
+if (signingKey is not null)
+{
+    Console.WriteLine($"CIMD client auth: private_key_jwt (kid={signingKey.KeyId}, jwks_uri={clientOptions.JwksUri})");
+}
 
 app.Run();
