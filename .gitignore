@@ -42,3 +42,6 @@ src/OpenID.MCPInterop.Client/keys/
 # OS files
 .DS_Store
 Thumbs.db
+
+# PEM files
+*.pem

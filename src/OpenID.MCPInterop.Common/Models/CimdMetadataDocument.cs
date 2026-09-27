@@ -29,7 +29,14 @@ public sealed class CimdMetadataDocument
     [JsonPropertyName("response_types")]
     public string[] ResponseTypes { get; init; } = ["code"];
 
+    /// <summary>
+    /// Space-delimited per RFC 7591 section 2. Omitted from the serialized
+    /// document when null rather than emitted as <c>"scope": null</c>, which
+    /// isn't a valid value and a strict AS may reject the whole document
+    /// because of it.
+    /// </summary>
     [JsonPropertyName("scope")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Scope { get; init; }
 
     /// <summary>

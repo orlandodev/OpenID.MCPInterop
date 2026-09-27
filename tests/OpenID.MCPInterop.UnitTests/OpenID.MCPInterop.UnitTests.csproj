@@ -18,6 +18,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\..\cimd\client-metadata.json" Link="Published\client-metadata.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\src\OpenID.MCPInterop.Client\appsettings.GitHubPages.json" Link="Published\appsettings.GitHubPages.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\OpenID.MCPInterop.Common\OpenID.MCPInterop.Common.csproj" />
     <ProjectReference Include="..\..\src\OpenID.MCPInterop.Client\OpenID.MCPInterop.Client.csproj" />
   </ItemGroup>

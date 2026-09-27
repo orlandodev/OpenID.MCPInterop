@@ -97,7 +97,11 @@ verified working configuration (not guessed at):
   (`cimd-policy`) requiring HTTPS `client_id` URLs on `client.dev.internal`
   and applying that profile. Without this, `--features=cimd` alone doesn't
   make Keycloak treat a URL as a valid `client_id` - you'd see
-  "Client not found".
+  "Client not found". Both lists also permit `orlandodev.github.io`, for
+  `Client`'s `GitHubPages` scenario. Realm import only runs when the realm
+  is first created, so on an existing realm add that domain by hand
+  (**Realm settings** -> **Client policies**: the `cimd-profile` executor's
+  permitted domains and the `cimd-policy` condition's).
 - The `mcp:tools` **client scope**, with an `oidc-audience-mapper`
   protocol mapper setting `aud` to `http://localhost:5000` (`Server`'s
   `Authorization:Audience`). Keycloak doesn't support RFC 8707 resource
