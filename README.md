@@ -40,12 +40,13 @@ OAuth step as it happens (authorization redirect, token exchange, tool
 call), rather than an auto-run console app. It's config-driven across named
 scenarios (`--launch-profile` / `ASPNETCORE_ENVIRONMENT`), so the same UI
 drives the CIMD Agent Governance leg against this repo's Keycloak
-(`Keycloak`), the direct-trust Leg 3 flow (`11AIBlockchain`), or the CIMD
-leg against a third-party AS + external MCP server (which
-needs a public tunnel to the Client); the EMA / ID-JAG cross-org leg is a
-further opt-in on the `Keycloak` scenario. The log
-pane can be resized by drag and copied to the clipboard for pasting into
-interop bug reports.
+(`Keycloak`), the direct-trust Leg 3 flow (`11AIBlockchain`), the CIMD leg
+presenting a document published to GitHub Pages instead of one it hosts
+itself (`GitHubPages`), or that same published document against a live
+third-party participant (`jshe`, Descope + an external MCP server); the
+EMA / ID-JAG cross-org leg is a further opt-in on the `Keycloak` scenario.
+The log pane can be resized by drag and copied to the clipboard for
+pasting into interop bug reports.
 
 ```bash
 dotnet run --project src/OpenID.MCPInterop.Client --launch-profile Keycloak

@@ -38,6 +38,8 @@ dotnet test --filter "ClientId_ShouldMatch_HostedDocumentUrl"        # single te
 dotnet run --project src/OpenID.MCPInterop.Server                                   # Keycloak scenario (default profile)
 dotnet run --project src/OpenID.MCPInterop.Client --launch-profile Keycloak         # CIMD + EMA legs, this repo's own Keycloak
 dotnet run --project src/OpenID.MCPInterop.Client --launch-profile 11AIBlockchain   # Leg 3, direct-trust, no CIMD
+dotnet run --project src/OpenID.MCPInterop.Client --launch-profile GitHubPages      # CIMD leg via the published cimd/ document, no tunnel
+dotnet run --project src/OpenID.MCPInterop.Client --launch-profile jshe             # CIMD leg vs 3rd-party Descope AS + external MCP server, reuses the GitHubPages document
 dotnet run --project src/OpenID.MCPInterop.Issuer
 ```
 
@@ -78,14 +80,24 @@ Four projects, one shared kernel:
   (a web UI with a Connect button and human-readable session log, not an
   auto-run console app) and config-driven across named scenarios
   (`ASPNETCORE_ENVIRONMENT`/`--launch-profile`: `Keycloak`,
-  `11AIBlockchain` - see `appsettings.{Scenario}.json` and
-  `docs/architecture.md`'s "Named scenarios"). `Client:UseCimd` toggles the
-  primary leg between CIMD (hosts its own `CimdMetadataDocument`, drives a
+  `11AIBlockchain`, `GitHubPages`, `jshe` - see `appsettings.{Scenario}.json`
+  and `docs/architecture.md`'s "Named scenarios"). `Client:UseCimd` toggles
+  the primary leg between CIMD (hosts its own `CimdMetadataDocument`, drives a
   full authorization-code+PKCE flow via the MCP SDK's `ClientOAuthOptions`;
   by default as a `private_key_jwt` confidential client per CIMD section 8.2 -
   `Client:CimdAuthMethod`, `ClientSigningKey`, `PrivateKeyJwtHandler`)
   and direct-trust (pre-registered `ClientId`/`ClientSecret`, no CIMD
-  document - Leg 3). `Client:UseEma` (only `true` for `Keycloak`) enables a
+  document - Leg 3). `GitHubPages` and `jshe` both present the same CIMD
+  document/JWKS published from `cimd/` to GitHub Pages
+  (`.github/workflows/publish-cimd.yml`) rather than hosting it via a
+  tunnel - their `CimdDocumentUrl`/`RedirectUri` must match that published
+  document character for character (`CimdDocumentFactoryTests` guards it;
+  a mismatch is a redirect-URL-rejection at the AS, not a stall). `jshe`
+  additionally intersects whatever scope a resource server's
+  WWW-Authenticate/PRM challenge advertises with `Client:Scopes`
+  (`ScopeSelector` in `Endpoints.cs`), since a resource server can advertise
+  a scope the client has no business requesting. `Client:UseEma` (only
+  `true` for `Keycloak`) enables a
   second, independent leg: a dedicated login against Keycloak for a subject
   `id_token`, then the SDK's `IdentityAssertionGrantProvider` to request an
   ID-JAG from `Issuer` (RFC 8693) and redeem it at Keycloak (RFC 7523) - see

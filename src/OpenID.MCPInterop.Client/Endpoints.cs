@@ -370,6 +370,15 @@ public static class Endpoints
                 // ForceEmptyScope overrides those candidates entirely - see its doc
                 // comment on ClientOptions for why an empty Scopes array can't do
                 // this on its own.
+                //
+                // Beyond that, only ever request a scope this scenario's own
+                // Client:Scopes explicitly lists - never everything a resource
+                // server's WWW-Authenticate/PRM happens to advertise. A resource
+                // server can advertise a scope this client has no business asking
+                // for (observed against the jshe referee: a rotating
+                // "canary:challenge:<date>"/"canary:oprm:<date>" probe scope that
+                // isn't registered on the AS and gets the whole authorization
+                // rejected with invalid_scope if echoed back blindly).
                 ScopeSelector = candidateScopes =>
                 {
                     var candidates = candidateScopes?.ToArray() ?? [];
@@ -381,7 +390,9 @@ public static class Endpoints
                         return [];
                     }
 
-                    return candidates.Where(scope => scope != "offline_access");
+                    var requested = candidates.Where(scope => scope != "offline_access" && options.Scopes.Contains(scope)).ToArray();
+                    session.AppendLog($"Scopes actually requested (intersected with Client:Scopes): {(requested.Length == 0 ? "(none)" : string.Join(' ', requested))}");
+                    return requested;
                 },
                 AuthorizationCallbackHandler = (context, ct) =>
                     LoginFlows.HandleAuthorizationCallbackAsync(context, session, authorizationUriReady, ct),
