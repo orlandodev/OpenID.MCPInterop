@@ -56,6 +56,20 @@ public class CimdMetadataDocumentTests
     }
 
     [Fact]
+    public void NullScope_ShouldBeOmitted_NotSerializedAsNull()
+    {
+        var document = new CimdMetadataDocument
+        {
+            ClientId = "https://localhost:5050/client-metadata.json",
+            RedirectUris = ["http://127.0.0.1:5100/callback"],
+        };
+
+        var json = JsonSerializer.Serialize(document);
+
+        Assert.DoesNotContain("\"scope\"", json);
+    }
+
+    [Fact]
     public void JwksUri_ShouldBeOmitted_ForPublicClient()
     {
         var document = new CimdMetadataDocument

@@ -1,0 +1,15 @@
+{
+  "client_id": "https://orlandodev.github.io/OpenID.MCPInterop/client-metadata.json",
+  "client_name": "OpenID.MCPInterop.Client",
+  "redirect_uris": [
+    "https://127.0.0.1:5050/callback"
+  ],
+  "token_endpoint_auth_method": "private_key_jwt",
+  "grant_types": [
+    "authorization_code"
+  ],
+  "response_types": [
+    "code"
+  ],
+  "jwks_uri": "https://orlandodev.github.io/OpenID.MCPInterop/jwks.json"
+}

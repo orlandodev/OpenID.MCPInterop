@@ -223,7 +223,7 @@ side.
 
 ### Named scenarios
 
-`Client` is one project supporting two named interop scenarios, selected
+`Client` is one project supporting three named interop scenarios, selected
 entirely by config - `ASPNETCORE_ENVIRONMENT` (or `dotnet run
 --launch-profile <name>`, see `Properties/launchSettings.json`) picks which
 `appsettings.{Scenario}.json` ASP.NET Core's standard environment-config
@@ -232,6 +232,7 @@ layering applies on top of the shared `appsettings.json` defaults:
 | Scenario | `Client:UseCimd` | `Client:UseEma` | What it exercises |
 |---|---|---|---|
 | `Keycloak` | `true` | `true` | Agent Governance (CIMD) leg + cross-org (EMA) leg, both against this repo's own local Keycloak - the two build phases above. |
+| `GitHubPages` | `true` | `false` | Agent Governance (CIMD) leg only, presenting the static CIMD document and JWKS published from `cimd/` to `https://orlandodev.github.io/OpenID.MCPInterop/` (`.github/workflows/publish-cimd.yml`) instead of the one `Client` serves, so partners' ASes can fetch it without a tunnel. `CimdDocumentFactoryTests` fails if the published document drifts from what this scenario's config generates. |
 | `11AIBlockchain` | `false` | `false` | Leg 3, direct-trust - a pre-registered OAuth 2.1 client, no CIMD document, no ID-JAG. |
 
 Every scenario runs through the same web UI (`GET /`, a Connect button per

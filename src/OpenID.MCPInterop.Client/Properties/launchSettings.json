@@ -8,6 +8,14 @@
       },
       "applicationUrl": "https://localhost:5050"
     },
+    "GitHubPages": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "GitHubPages"
+      },
+      "applicationUrl": "https://localhost:5050"
+    },
     "11AIBlockchain": {
       "commandName": "Project",
       "launchBrowser": true,

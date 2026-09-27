@@ -137,7 +137,7 @@
             "executor": "client-id-metadata-document",
             "configuration": {
               "cimd-allow-http-scheme": false,
-              "cimd-allow-permitted-domains": [ "client.dev.internal", "127.0.0.1" ],
+              "cimd-allow-permitted-domains": [ "client.dev.internal", "127.0.0.1", "orlandodev.github.io" ],
               "cimd-restrict-same-domain": false,
               "cimd-required-properties": [],
               "only-allow-confidential-client": false
@@ -161,7 +161,7 @@
             "configuration": {
               "is-negative-logic": false,
               "client-id-uri-scheme": [ "https" ],
-              "client-id-uri-allow-permitted-domains": [ "client.dev.internal" ]
+              "client-id-uri-allow-permitted-domains": [ "client.dev.internal", "orlandodev.github.io" ]
             }
           }
         ],

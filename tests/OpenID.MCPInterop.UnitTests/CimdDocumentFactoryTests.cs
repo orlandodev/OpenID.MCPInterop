@@ -1,4 +1,10 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
+
+using Microsoft.Extensions.Configuration;
 using OpenID.MCPInterop.Client.Auth;
+using OpenID.MCPInterop.Client.Options;
+using OpenID.MCPInterop.Common.Configuration;
 using Xunit;
 
 namespace OpenID.MCPInterop.UnitTests;
@@ -36,6 +42,26 @@ public class CimdDocumentFactoryTests
 
         Assert.Equal("private_key_jwt", document.TokenEndpointAuthMethod);
         Assert.Equal(jwksUri, document.JwksUri);
+    }
+
+    [Fact]
+    public void PublishedDocument_ShouldMatch_GitHubPagesScenarioConfig()
+    {
+        // cimd/client-metadata.json is a static file on GitHub Pages, so
+        // nothing regenerates it when the factory, CimdMetadataDocument or
+        // the GitHubPages scenario's CimdDocumentUrl/RedirectUri change - an
+        // AS would then reject the redirect_uri or client_id the Client
+        // actually presents. Republish the file whenever this fails.
+        var configuration = new ConfigurationBuilder()
+            .AddJsonFile(Path.Combine(AppContext.BaseDirectory, "Published", "appsettings.GitHubPages.json"))
+            .Build();
+        var options = OptionsBinder.BindAndValidate<ClientOptions>(configuration, ClientOptions.SectionName);
+
+        var generated = JsonSerializer.SerializeToNode(
+            CimdDocumentFactory.Create(options.CimdDocumentUrl!, options.RedirectUri, options.JwksUri));
+        var published = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Published", "client-metadata.json")));
+
+        Assert.True(JsonNode.DeepEquals(generated, published), $"cimd/client-metadata.json is stale. Expected:{Environment.NewLine}{generated}");
     }
 
     [Fact]
