@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using OpenID.MCPInterop.Common.Constants;
 
 namespace OpenID.MCPInterop.Common.Models;
 
@@ -20,7 +21,7 @@ public sealed class CimdMetadataDocument
     public required string[] RedirectUris { get; init; }
 
     [JsonPropertyName("token_endpoint_auth_method")]
-    public string TokenEndpointAuthMethod { get; init; } = "none";
+    public string TokenEndpointAuthMethod { get; init; } = OAuthConstants.NoneTokenEndpointAuthMethod;
 
     [JsonPropertyName("grant_types")]
     public string[] GrantTypes { get; init; } = ["authorization_code"];
@@ -30,4 +31,15 @@ public sealed class CimdMetadataDocument
 
     [JsonPropertyName("scope")]
     public string? Scope { get; init; }
+
+    /// <summary>
+    /// Where the AS fetches this client's public signing keys when
+    /// <see cref="TokenEndpointAuthMethod"/> is <c>private_key_jwt</c> (CIMD
+    /// section 8.2). Public keys only - section 4.1 forbids private key
+    /// material or a client_secret anywhere in this document. Omitted from
+    /// the serialized document when null (public clients).
+    /// </summary>
+    [JsonPropertyName("jwks_uri")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? JwksUri { get; init; }
 }

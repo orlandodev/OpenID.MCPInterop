@@ -30,6 +30,10 @@ deploy/keycloak/certs/
 # see deploy/keycloak/docker-compose.override.yml.example
 deploy/keycloak/docker-compose.override.yml
 
+# Client's persisted private_key_jwt signing key (CIMD section 8.2) - generated
+# on first run by ClientSigningKey; delete to rotate.
+src/OpenID.MCPInterop.Client/keys/
+
 # NuGet
 *.nupkg
 **/packages/*

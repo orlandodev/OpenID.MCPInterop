@@ -6,9 +6,9 @@
 
   <ItemGroup>
 	<!-- MCP (Model Context Protocol) Packages
-		 v2.0.0 - Major update with enhanced stability and features -->
-	<PackageVersion Include="ModelContextProtocol" Version="2.0.0" />
-	<PackageVersion Include="ModelContextProtocol.AspNetCore" Version="2.0.0" />
+		 v2.2.0 - still no private_key_jwt support in ClientOAuthOptions (see PrivateKeyJwtHandler) -->
+	<PackageVersion Include="ModelContextProtocol" Version="2.2.0" />
+	<PackageVersion Include="ModelContextProtocol.AspNetCore" Version="2.2.0" />
 
 	<!-- Microsoft Extensions
 		 v10.0.10 - Latest stable patch release compatible with .NET 10 -->
@@ -24,6 +24,11 @@
 	<PackageVersion Include="Microsoft.IdentityModel.Tokens" Version="8.19.2" />
 	<PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.19.2" />
 	<PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.19.2" />
+
+	<!-- Duende.IdentityModel (Apache-2.0 client library, not IdentityServer)
+		 v8.1.0 - OAuth/OIDC protocol constants (client_assertion, private_key_jwt,
+		 JWT claim types) used by Client's private_key_jwt handler. -->
+	<PackageVersion Include="Duende.IdentityModel" Version="8.1.0" />
 
 	<!-- Test Packages
 		 v17.12.0 - Latest stable SDK test harness
