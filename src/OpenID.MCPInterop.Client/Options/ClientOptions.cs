@@ -73,6 +73,20 @@ public sealed class ClientOptions : IValidatableObject
 
     public string[] Scopes { get; init; } = ["openid", "mcp:tools"];
 
+    /// <summary>
+    /// Forces the OAuth authorization/token request to carry no scope at
+    /// all, overriding both <see cref="Scopes"/> and whatever the target
+    /// resource's WWW-Authenticate/PRM challenge advertises - see
+    /// Endpoints.cs's ScopeSelector. Exists to drive a missing-scope
+    /// negative test against a resource server that otherwise hands the
+    /// client its required scope automatically via the challenge, so
+    /// setting <see cref="Scopes"/> to an empty array can't produce it
+    /// (the SDK still requests whatever the challenge advertises). Defaults
+    /// to false; only a scenario deliberately exercising that negative
+    /// case should set it.
+    /// </summary>
+    public bool ForceEmptyScope { get; init; }
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (UseCimd && string.IsNullOrWhiteSpace(CimdDocumentUrl))

@@ -441,7 +441,7 @@ internal static class ClientHtmlRenderer
               <div class="mcp-decision-grid">
                 <div class="mcp-decision-row"><span class="mcp-decision-key">leg</span><span class="mcp-decision-val">{WebUtility.HtmlEncode(leg)}</span></div>
                 <div class="mcp-decision-row"><span class="mcp-decision-key">tool</span><span class="mcp-decision-val">{WebUtility.HtmlEncode(result.ToolName)}</span></div>
-                <div class="mcp-decision-row"><span class="mcp-decision-key">at</span><span class="mcp-decision-val">{result.At:T}</span></div>
+                <div class="mcp-decision-row"><span class="mcp-decision-key">at</span><span class="mcp-decision-val">{result.At.UtcDateTime:yyyy-MM-ddTHH:mm:ss'Z'}</span></div>
               </div>
               <div class="mcp-result">
                 <span class="mcp-eyebrow">Tool result</span>
@@ -476,7 +476,7 @@ internal static class ClientHtmlRenderer
 
         foreach (var (timestamp, message) in log)
         {
-            html.Append($"""<div class="mcp-log-line"><span class="mcp-log-time">{timestamp:T}</span><span class="mcp-log-text">{WebUtility.HtmlEncode(message)}</span></div>""");
+            html.Append($"""<div class="mcp-log-line"><span class="mcp-log-time">{timestamp.UtcDateTime:yyyy-MM-ddTHH:mm:ss'Z'}</span><span class="mcp-log-text">{WebUtility.HtmlEncode(message)}</span></div>""");
         }
 
         html.Append("</div></section>");
