@@ -370,7 +370,7 @@ ephemeral signing key) matter directly if you're consuming `Issuer` or
   the host's real LAN IP - see `docs/keycloak-setup.md`'s "Podman on
   Windows..." section for the full story and how to keep it in sync if
   your LAN IP changes.
-- MCP SDK 2.0.0's `ClientOAuthOptions` has no `private_key_jwt` support
+- MCP SDK 2.2.0's `ClientOAuthOptions` has no `private_key_jwt` support
   (only `client_secret_*`/`none`) and no client-assertion hook. `Client`
   works around that with `PrivateKeyJwtHandler`, a `DelegatingHandler` in
   the transport's `HttpClient` chain that recognizes the SDK's

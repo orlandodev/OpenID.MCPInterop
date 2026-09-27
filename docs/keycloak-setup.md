@@ -133,11 +133,26 @@ a valid `client_assertion` fails with `invalid_client`.
   cached both the CIMD document and the old JWKS, so expect `invalid_client`
   ("Signature on JWT token failed validation") until it refetches. The quickest
   fix is to delete the materialized CIMD client in the admin console so the
-  next login re-resolves it.
-- **Proving enforcement**: the `cimd-profile` executor's
-  `only-allow-confidential-client` (currently `false`) can be flipped to
-  `true`, which should make Keycloak reject any CIMD document that falls back to
-  `Client:CimdAuthMethod` = `none`. That's unverified: going by the option's name, not tested.
+  next login re-resolves it. Deleting it also drops the test user's
+  earlier consent, so the next login shows a one-time "Grant Access to
+  OpenID.MCPInterop.Client" (`mcp:tools`) screen. Click **Yes**.
+- **Requiring confidential CIMD clients**: the `cimd-profile` executor's
+  `only-allow-confidential-client` (`false` in the realm import) makes
+  Keycloak reject any CIMD document that falls back to
+  `Client:CimdAuthMethod` = `none`. Verified 2026-09-27 against 26.7.0 by
+  flipping it to `true` via the admin REST API
+  (`PUT /admin/realms/mcpinterop/client-policies/profiles`) and deleting the
+  cached CIMD client first so Keycloak re-read the document:
+  - `none`: rejected at the authorization endpoint, before the login page,
+    with "Invalid Client Metadata: confidential client is only allowed." No
+    client is materialized.
+  - `private_key_jwt` (control): connects normally, and the token request
+    with the `client_assertion` returns 200.
+
+  It stays `false` in the import so the `none` fallback keeps working for
+  local experiments. Flip it to `true` (admin console: **Realm settings** ->
+  **Client policies** -> **Profiles** -> `cimd-profile` -> the
+  `client-id-metadata-document` executor) to enforce confidential-only.
 
 ## If `mcp:tools` didn't auto-attach to the CIMD client
 

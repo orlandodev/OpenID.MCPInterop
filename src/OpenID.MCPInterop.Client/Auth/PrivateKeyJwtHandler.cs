@@ -7,7 +7,7 @@ namespace OpenID.MCPInterop.Client.Auth;
 /// Adds an RFC 7523 section 2.2 client_assertion to every token-endpoint
 /// request the MCP SDK makes for the CIMD client, which is how a CIMD client
 /// advertising <c>private_key_jwt</c> authenticates (CIMD section 8.2). MCP
-/// SDK 2.0.0's <c>ClientOAuthOptions</c> only knows client_secret/none and has
+/// SDK 2.2.0's <c>ClientOAuthOptions</c> only knows client_secret/none and has
 /// no assertion hook, but it sends its token requests through the HttpClient
 /// handed to HttpClientTransport - so this sits in that client's handler
 /// chain and rewrites the form body in flight instead of reimplementing the
