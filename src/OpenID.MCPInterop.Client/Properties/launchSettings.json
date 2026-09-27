@@ -23,6 +23,14 @@
         "ASPNETCORE_ENVIRONMENT": "11AIBlockchain"
       },
       "applicationUrl": "https://localhost:5050"
+    },
+    "jshe": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "jshe"
+      },
+      "applicationUrl": "https://localhost:5050"
     }
   }
 }

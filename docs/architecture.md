@@ -223,7 +223,7 @@ side.
 
 ### Named scenarios
 
-`Client` is one project supporting three named interop scenarios, selected
+`Client` is one project supporting four named interop scenarios, selected
 entirely by config - `ASPNETCORE_ENVIRONMENT` (or `dotnet run
 --launch-profile <name>`, see `Properties/launchSettings.json`) picks which
 `appsettings.{Scenario}.json` ASP.NET Core's standard environment-config
@@ -234,6 +234,7 @@ layering applies on top of the shared `appsettings.json` defaults:
 | `Keycloak` | `true` | `true` | Agent Governance (CIMD) leg + cross-org (EMA) leg, both against this repo's own local Keycloak - the two build phases above. |
 | `GitHubPages` | `true` | `false` | Agent Governance (CIMD) leg only, presenting the static CIMD document and JWKS published from `cimd/` to `https://orlandodev.github.io/OpenID.MCPInterop/` (`.github/workflows/publish-cimd.yml`) instead of the one `Client` serves, so partners' ASes can fetch it without a tunnel. `CimdDocumentFactoryTests` fails if the published document drifts from what this scenario's config generates. |
 | `11AIBlockchain` | `false` | `false` | Leg 3, direct-trust - a pre-registered OAuth 2.1 client, no CIMD document, no ID-JAG. |
+| `jshe` | `true` | `false` | Agent Governance (CIMD) leg against a live third-party participant - Descope as the CIMD-capable AS, an external Cloudflare Workers MCP server (the "Minority Prophet OpenID AIIM Interop Referee"). `CimdDocumentUrl`/`RedirectUri` point at the same published GitHub Pages document `GitHubPages` uses (character-for-character, per `CimdDocumentFactoryTests`) rather than a tunnel - Descope will reject the authorization request (`E061004`, redirect URL mismatch) if the two scenarios' `RedirectUri` ever diverge. Confirmed working end-to-end against Descope with `private_key_jwt` client auth. This referee also advertises an extra scope on its challenge/PRM (a rotating `canary:challenge:<date>`/`canary:oprm:<date>` pair) that isn't registered on the AS side - `ScopeSelector` (`Endpoints.cs`) intersects whatever the challenge/PRM advertise with `Client:Scopes` so it's never echoed back; without that, Descope rejects the whole authorization with `invalid_scope`. |
 
 Every scenario runs through the same web UI (`GET /`, a Connect button per
 leg, a human-readable session log) - see "Leg 3 - Direct-trust" above for
@@ -244,9 +245,9 @@ why every leg redirects the browser rather than opening a new tab.
 (`appsettings.Keycloak.json`, `Properties/launchSettings.json`) - it's
 listed first in `Server`'s `launchSettings.json`, so a plain `dotnet run
 --project src/OpenID.MCPInterop.Server` with no `--launch-profile` still
-behaves exactly as before. `Server` has no `11AIBlockchain` profile - that
-scenario's `Client:Server:Endpoint` points at an external partner's server,
-not this repo's own `Server`.
+behaves exactly as before. `Server` has no `11AIBlockchain` or `jshe`
+profile - those scenarios' `Client:Server:Endpoint` points at an external
+partner's server, not this repo's own `Server`.
 
 ### EMA leg wiring
 
