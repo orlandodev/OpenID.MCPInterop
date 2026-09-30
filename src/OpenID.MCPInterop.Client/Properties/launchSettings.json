@@ -31,6 +31,14 @@
         "ASPNETCORE_ENVIRONMENT": "jshe"
       },
       "applicationUrl": "https://localhost:5050"
+    },
+    "CKSaaS": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "CKSaaS"
+      },
+      "applicationUrl": "https://localhost:5050"
     }
   }
 }

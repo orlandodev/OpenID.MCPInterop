@@ -8,6 +8,7 @@ using ModelContextProtocol.Authentication;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 using OpenID.MCPInterop.Client.Auth;
+using OpenID.MCPInterop.Client.Helpers;
 using OpenID.MCPInterop.Client.Models;
 using OpenID.MCPInterop.Client.Options;
 using OpenID.MCPInterop.Client.Rendering;
@@ -232,7 +233,9 @@ public static class Endpoints
             Dictionary<string, object?> arguments;
             try
             {
-                arguments = BuildArguments(form, ClientHtmlRenderer.ParseSchemaFields(tool.Schema));
+                arguments = ToolArgumentBuilder.Build(
+                    form.ToDictionary(entry => entry.Key, entry => entry.Value.ToString()),
+                    ClientHtmlRenderer.ParseSchemaFields(tool.Schema));
             }
             catch (FormatException ex)
             {
@@ -462,7 +465,7 @@ public static class Endpoints
             };
 
             var mcpClient = await McpClient.CreateAsync(transport, mcpClientOptions, cancellationToken: cancellationToken);
-            session.AppendLog($"Connected to: {mcpClient.ServerInfo.Name}");
+            session.AppendLog($"Connected to: {mcpClient.TryGetServerName() ?? "(server did not identify itself)"}");
 
             var tools = await mcpClient.ListToolsAsync(cancellationToken: cancellationToken);
             var toolSummaries = tools
@@ -566,7 +569,7 @@ public static class Endpoints
             };
 
             var emaMcpClient = await McpClient.CreateAsync(emaTransport, mcpClientOptions, cancellationToken: cancellationToken);
-            session.AppendLog($"EMA leg connected to: {emaMcpClient.ServerInfo.Name}");
+            session.AppendLog($"EMA leg connected to: {emaMcpClient.TryGetServerName() ?? "(server did not identify itself)"}");
 
             var tools = await emaMcpClient.ListToolsAsync(cancellationToken: cancellationToken);
             var toolSummaries = tools
@@ -616,50 +619,7 @@ public static class Endpoints
 
     private static readonly JsonSerializerOptions PrettyPrint = new() { WriteIndented = true };
 
-    // Shown next to each Invoke button so parameter names don't have to be guessed.
+    // Shown in the Input card's Schema view so parameter names and constraints don't have to be guessed.
     private static string FormatSchema(JsonElement schema) =>
         JsonSerializer.Serialize(schema, PrettyPrint);
-
-    /// <summary>
-    /// Builds the CallToolAsync arguments dictionary from the Fields-mode
-    /// form post: one plain-text input per schema property, converted per
-    /// its declared type (object/array fields expect the user to type raw
-    /// JSON directly into that field). Blank, non-required fields are
-    /// omitted rather than sent as empty strings.
-    /// </summary>
-    /// <exception cref="FormatException">An object/array field's text isn't valid JSON - reject the call locally rather than forwarding an unparsed string to the server.</exception>
-    private static Dictionary<string, object?> BuildArguments(IFormCollection form, List<ClientHtmlRenderer.SchemaField> fields)
-    {
-        var arguments = new Dictionary<string, object?>();
-        foreach (var field in fields)
-        {
-            var raw = form[field.Name].ToString();
-            if (string.IsNullOrWhiteSpace(raw))
-            {
-                continue;
-            }
-
-            arguments[field.Name] = field.Type switch
-            {
-                "number" or "integer" when double.TryParse(raw, out var number) => number,
-                "boolean" when bool.TryParse(raw, out var boolean) => boolean,
-                "object" or "array" => ParseJsonElement(field.Name, raw),
-                _ => raw,
-            };
-        }
-
-        return arguments;
-    }
-
-    private static JsonElement ParseJsonElement(string fieldName, string raw)
-    {
-        try
-        {
-            return JsonSerializer.Deserialize<JsonElement>(raw);
-        }
-        catch (JsonException ex)
-        {
-            throw new FormatException($"argument '{fieldName}' must be valid JSON: {ex.Message}", ex);
-        }
-    }
 }
