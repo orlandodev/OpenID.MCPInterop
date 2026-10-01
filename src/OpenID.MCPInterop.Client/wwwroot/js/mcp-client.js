@@ -17,11 +17,13 @@ function mcpSetMode(mode) {
     if (!toggle) { return; }
     var fields = document.getElementById('mcp-fields-view');
     var json = document.getElementById('mcp-json-view');
+    var schema = document.getElementById('mcp-schema-view');
     toggle.querySelectorAll('button').forEach(function (b) {
         b.setAttribute('aria-pressed', b.dataset.mode === mode ? 'true' : 'false');
     });
     if (fields) { fields.style.display = mode === 'form' ? '' : 'none'; }
     if (json) { json.style.display = mode === 'json' ? '' : 'none'; }
+    if (schema) { schema.style.display = mode === 'schema' ? '' : 'none'; }
     if (mode === 'json') { mcpUpdateJsonPreview(); }
 }
 
@@ -31,10 +33,30 @@ function mcpUpdateJsonPreview() {
     if (!fields || !pre) { return; }
     var obj = {};
     fields.querySelectorAll('[data-field-name]').forEach(function (input) {
-        if (input.value) { obj[input.dataset.fieldName] = input.value; }
+        if (input.value) { obj[input.dataset.fieldName] = mcpCoerce(input.value, input.dataset.fieldType); }
     });
     pre.textContent = JSON.stringify(obj, null, 2);
 }
+
+// Mirrors ToolArgumentBuilder's server-side conversion so the JSON preview
+// shows the types actually sent; unparseable values stay as the raw string
+// (the server-side builder rejects them with an explanation in the log).
+function mcpCoerce(value, type) {
+    try {
+        if (type === 'integer' || type === 'number') { var n = Number(value); return isNaN(n) ? value : n; }
+        if (type === 'boolean') { return value === 'true' ? true : value === 'false' ? false : value; }
+        if (type === 'object' || type === 'array') { return JSON.parse(value); }
+    } catch (e) { /* invalid JSON - show as typed */ }
+    return value;
+}
+
+// A required field left empty blocks submit via browser validation, but its
+// message can't show while the Fields view is hidden behind JSON/Schema.
+document.body.addEventListener('invalid', function (e) {
+    if (e.target.closest && e.target.closest('#mcp-fields-view')) {
+        mcpSetMode('form');
+    }
+}, true);
 
 document.body.addEventListener('input', function (e) {
     if (e.target.closest && e.target.closest('#mcp-fields-view')) {

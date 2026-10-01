@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Antiforgery;
 using OpenID.MCPInterop.Client;
+using OpenID.MCPInterop.Client.Helpers;
 using OpenID.MCPInterop.Client.Models;
 using OpenID.MCPInterop.Client.Options;
 using OpenID.MCPInterop.Client.State;
@@ -39,15 +40,22 @@ internal static class ClientHtmlRenderer
         """;
 
     /// <summary>A tool input parameter parsed out of its JSON schema, for the Fields-mode form.</summary>
-    internal readonly record struct SchemaField(string Name, string Type, bool Required);
+    internal readonly record struct SchemaField(
+        string Name,
+        string Type,
+        bool Required,
+        string? Description = null,
+        IReadOnlyList<string>? EnumValues = null,
+        string? DefaultValue = null);
 
     /// <summary>
     /// Reads a tool's JSON schema (already stored pretty-printed, from
     /// <see cref="Endpoints.FormatSchema"/>) back into a flat field list for
-    /// the Fields-mode input form - name, declared JSON-Schema <c>type</c>,
-    /// and whether it's in the schema's <c>required</c> array. Shared with
-    /// <see cref="Endpoints.BuildArguments"/>, which needs the same field
-    /// shape to parse submitted form values against their declared types.
+    /// the Fields-mode input form - name, effective JSON-Schema <c>type</c>,
+    /// whether it's in the schema's <c>required</c> array, plus the
+    /// <c>description</c>/<c>enum</c>/<c>default</c> hints. Shared with
+    /// <see cref="ToolArgumentBuilder"/>, which needs the same field shape to
+    /// validate submitted form values against the schema.
     /// </summary>
     internal static List<SchemaField> ParseSchemaFields(string? schemaJson)
     {
@@ -78,10 +86,15 @@ internal static class ClientHtmlRenderer
             {
                 foreach (var property in properties.EnumerateObject())
                 {
-                    var type = property.Value.TryGetProperty("type", out var typeElement) && typeElement.ValueKind == JsonValueKind.String
-                        ? typeElement.GetString() ?? "string"
-                        : "string";
-                    fields.Add(new SchemaField(property.Name, type, required.Contains(property.Name)));
+                    var schema = property.Value;
+                    var enumValues = ReadEnumValues(schema);
+                    fields.Add(new SchemaField(
+                        property.Name,
+                        ResolveType(schema, enumValues),
+                        required.Contains(property.Name),
+                        ReadString(schema, "description") ?? ReadString(schema, "title"),
+                        enumValues,
+                        schema.TryGetProperty("default", out var defaultElement) ? JsonText(defaultElement) : null));
                 }
             }
 
@@ -92,6 +105,99 @@ internal static class ClientHtmlRenderer
             return [];
         }
     }
+
+    /// <summary>
+    /// A property's single effective type. Handles the shapes schema
+    /// generators commonly emit instead of a plain <c>"type": "x"</c>:
+    /// nullable unions (<c>["string", "null"]</c>), <c>anyOf</c>/<c>oneOf</c>
+    /// wrappers, and type-less schemas implied by <c>enum</c>,
+    /// <c>properties</c> or <c>items</c>.
+    /// </summary>
+    private static string ResolveType(JsonElement schema, IReadOnlyList<string>? enumValues)
+    {
+        if (schema.ValueKind != JsonValueKind.Object)
+        {
+            return "string";
+        }
+
+        if (schema.TryGetProperty("type", out var typeElement))
+        {
+            if (typeElement.ValueKind == JsonValueKind.String)
+            {
+                return typeElement.GetString() ?? "string";
+            }
+
+            if (typeElement.ValueKind == JsonValueKind.Array)
+            {
+                var nonNull = typeElement.EnumerateArray()
+                    .Select(item => item.GetString())
+                    .FirstOrDefault(item => item is not null and not "null");
+                return nonNull ?? "string";
+            }
+        }
+
+        foreach (var combinator in new[] { "anyOf", "oneOf", "allOf" })
+        {
+            if (schema.TryGetProperty(combinator, out var branches) && branches.ValueKind == JsonValueKind.Array)
+            {
+                var branchType = branches.EnumerateArray()
+                    .Select(branch => ResolveType(branch, ReadEnumValues(branch)))
+                    .FirstOrDefault(type => type != "null");
+                if (branchType is not null)
+                {
+                    return branchType;
+                }
+            }
+        }
+
+        if (enumValues is { Count: > 0 } && schema.TryGetProperty("enum", out var enumElement))
+        {
+            return enumElement.EnumerateArray().First().ValueKind switch
+            {
+                JsonValueKind.Number => "number",
+                JsonValueKind.True or JsonValueKind.False => "boolean",
+                _ => "string",
+            };
+        }
+
+        if (schema.TryGetProperty("properties", out _))
+        {
+            return "object";
+        }
+
+        return schema.TryGetProperty("items", out _) ? "array" : "string";
+    }
+
+    private static IReadOnlyList<string>? ReadEnumValues(JsonElement schema)
+    {
+        if (schema.ValueKind != JsonValueKind.Object
+            || !schema.TryGetProperty("enum", out var enumElement)
+            || enumElement.ValueKind != JsonValueKind.Array)
+        {
+            return null;
+        }
+
+        var values = enumElement.EnumerateArray()
+            .Where(item => item.ValueKind != JsonValueKind.Null)
+            .Select(JsonText)
+            .ToList();
+        return values.Count > 0 ? values : null;
+    }
+
+    private static string? ReadString(JsonElement schema, string propertyName) =>
+        schema.ValueKind == JsonValueKind.Object
+        && schema.TryGetProperty(propertyName, out var element)
+        && element.ValueKind == JsonValueKind.String
+            ? element.GetString()
+            : null;
+
+    private static string JsonText(JsonElement element) => element.ValueKind switch
+    {
+        JsonValueKind.String => element.GetString() ?? string.Empty,
+        JsonValueKind.True => "true",
+        JsonValueKind.False => "false",
+        _ => element.GetRawText(),
+    };
 
     private static string BuildAntiforgeryField(AntiforgeryTokenSet tokens) =>
         $"""<input type="hidden" name="{WebUtility.HtmlEncode(tokens.FormFieldName)}" value="{WebUtility.HtmlEncode(tokens.RequestToken)}">""";
@@ -165,7 +271,7 @@ internal static class ClientHtmlRenderer
     {
         var status = leg == "ema" ? session.EmaStatus : session.Status;
         var client = leg == "ema" ? session.EmaClient : session.Client;
-        var name = client?.ServerInfo.Name ?? (leg == "ema" ? "EMA leg" : "Primary leg");
+        var name = client?.TryGetServerName() ?? (leg == "ema" ? "EMA leg" : "Primary leg");
         var dotClass = status switch
         {
             ClientConnectionStatus.Connected => "mcp-dot is-live",
@@ -250,7 +356,7 @@ internal static class ClientHtmlRenderer
     {
         var status = selectedLeg == "ema" ? session.EmaStatus : session.Status;
         var client = selectedLeg == "ema" ? session.EmaClient : session.Client;
-        var name = client?.ServerInfo.Name ?? (selectedLeg == "ema" ? "EMA leg" : "Primary leg");
+        var name = client?.TryGetServerName() ?? (selectedLeg == "ema" ? "EMA leg" : "Primary leg");
 
         var statusTag = status == ClientConnectionStatus.Connected
             ? $"""<span class="tag tag-accent"><span class="mcp-dot is-live"></span>{status}</span>"""
@@ -374,6 +480,7 @@ internal static class ClientHtmlRenderer
                     <div class="mcp-toggle" id="mcp-input-toggle">
                       <button type="button" data-mode="form" aria-pressed="true" onclick="mcpSetMode('form')">Fields</button>
                       <button type="button" data-mode="json" aria-pressed="false" onclick="mcpSetMode('json')">JSON</button>
+                      <button type="button" data-mode="schema" aria-pressed="false" onclick="mcpSetMode('schema')">Schema</button>
                     </div>
                   </div>
 
@@ -390,19 +497,16 @@ internal static class ClientHtmlRenderer
 
         foreach (var field in fields)
         {
-            var requiredMark = field.Required ? """<span class="mcp-param-req">*</span>""" : string.Empty;
-            html.Append($"""
-                <div class="field">
-                  <label>{WebUtility.HtmlEncode(field.Name)}{requiredMark} <span class="mcp-param-type">{WebUtility.HtmlEncode(field.Type)}</span></label>
-                  <input class="input" name="{WebUtility.HtmlEncode(field.Name)}" data-field-name="{WebUtility.HtmlEncode(field.Name)}" placeholder="{WebUtility.HtmlEncode(field.Type)}">
-                </div>
-                """);
+            html.Append(RenderField(field));
         }
 
-        html.Append("""
+        html.Append($"""
                     </div>
                     <div id="mcp-json-view" style="display:none">
-                      <pre class="mcp-code" id="mcp-json-preview">{}</pre>
+                      <pre class="mcp-code" id="mcp-json-preview">{"{}"}</pre>
+                    </div>
+                    <div id="mcp-schema-view" style="display:none">
+                      <pre class="mcp-code">{WebUtility.HtmlEncode(tool.Schema ?? "(no input schema published)")}</pre>
                     </div>
 
                     <div class="mcp-card-actions">
@@ -422,6 +526,61 @@ internal static class ClientHtmlRenderer
         }
 
         html.Append("</div></div>");
+        return html.ToString();
+    }
+
+    /// <summary>
+    /// One Fields-mode input, shaped by its schema so an invalid value is hard
+    /// to enter: enums and booleans become dropdowns, numbers get numeric
+    /// inputs, object/array fields get a wide JSON textarea, and required
+    /// fields carry <c>required</c> so the browser blocks an empty submit.
+    /// </summary>
+    private static string RenderField(SchemaField field)
+    {
+        var name = WebUtility.HtmlEncode(field.Name);
+        var type = WebUtility.HtmlEncode(field.Type);
+        var requiredMark = field.Required ? """<span class="mcp-param-req">*</span>""" : string.Empty;
+        var requiredAttribute = field.Required ? " required" : string.Empty;
+        var commonAttributes = $"""name="{name}" data-field-name="{name}" data-field-type="{type}"{requiredAttribute}""";
+        var placeholder = WebUtility.HtmlEncode(field.DefaultValue is null ? field.Type : $"default: {field.DefaultValue}");
+        var isWide = field.Type is "object" or "array";
+
+        var options = field.EnumValues ?? (field.Type == "boolean" ? ["true", "false"] : null);
+        var input = options switch
+        {
+            not null => RenderSelect(commonAttributes, options, field.DefaultValue, field.Required),
+            _ when isWide => $"""<textarea class="input" rows="4" {commonAttributes} placeholder="{WebUtility.HtmlEncode(field.DefaultValue ?? $"JSON {field.Type} - see Schema")}"></textarea>""",
+            _ when field.Type == "integer" => $"""<input class="input" type="number" step="1" {commonAttributes} placeholder="{placeholder}">""",
+            _ when field.Type == "number" => $"""<input class="input" type="number" step="any" {commonAttributes} placeholder="{placeholder}">""",
+            _ => $"""<input class="input" {commonAttributes} placeholder="{placeholder}">""",
+        };
+
+        var description = field.Description is null
+            ? string.Empty
+            : $"""<small class="mcp-param-desc">{WebUtility.HtmlEncode(field.Description)}</small>""";
+
+        return $"""
+            <div class="field{(isWide ? " is-wide" : string.Empty)}">
+              <label>{name}{requiredMark} <span class="mcp-param-type">{type}</span></label>
+              {input}
+              {description}
+            </div>
+            """;
+    }
+
+    private static string RenderSelect(string commonAttributes, IReadOnlyList<string> options, string? defaultValue, bool required)
+    {
+        var html = new StringBuilder($"""<select class="input" {commonAttributes}>""");
+        var blankLabel = required ? "- choose -" : "(not set)";
+        html.Append($"""<option value="">{blankLabel}</option>""");
+        foreach (var option in options)
+        {
+            var selected = option == defaultValue ? " selected" : string.Empty;
+            var encoded = WebUtility.HtmlEncode(option);
+            html.Append($"""<option value="{encoded}"{selected}>{encoded}</option>""");
+        }
+
+        html.Append("</select>");
         return html.ToString();
     }
 
